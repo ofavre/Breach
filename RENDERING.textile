@@ -1,0 +1,94 @@
+h1. Rendering
+
+h2. Purpose of this file
+
+I will expose here the choice made regarding the rendering of the scene using OpenGL.
+Mainly, technical choices will be explained (and maybe even justified!).
+
+h2. How to render a breach
+
+The primary concern here is: how could we combine two different views of the same scene, localizing one view inside a crack on an object.
+
+"I read about creating mirrors":http://www.opengl.org/resources/faq/technical/transformations.htm#tran0170 on the official OpenGL website.
+This basically does:
+# Render the reflected scene (without the mirror), looking at it from a transformed point of view
+# Clear the depth buffer
+# Paint the mirror surface transparently, or translucently using blending
+  This fills the depth buffer with the correct mirror position, while the colored pixels still show the reflected scene
+# Paint the rest of the scene normally
+  If a polygon occludes the mirror, it will be able to do so normally thanks to the depth buffer
+
+Looks simple and smart.
+But I have a different requirement: I need to create a hole inside a polygon, displaying my transformed scene through it.
+
+So I first tried to do a simple test:
+# Render the transformed scene
+  I simply draw a hidden (behind the wall) polygon
+# Configure things so that the old pixels will remain if the alpha channel of the new pixels is transparent
+# Render the wall using multitexturing to compose the repeating wall texture and a single quad of the breach in alpha
+
+I need my lighting to look good, so the walls need to be tesseled enough (grid like).
+_(Another way of doing is using a fragment shader, but I think this is a bit overkill)._
+
+Composing a repeating wall texture on a tesseled flat polygon and a single quad is not really the simplest thing.
+I thought of using the @gluTess@ family API to merge the tesselation grid and the quad, but again, this requires a whole bunch of code to merge the vertices properties and is actually complicated for a simple need.
+I also thought of using a simple quad for the wall and the breach, letting an extension control automatic tesselation. This is described "here":http://www.opengl.org/registry/specs/AMD/vertex_shader_tessellator.txt and another technique "here":http://www.opengl.org/registry/specs/ARB/tessellation_shader.txt .
+Honestly I know (stongly hope at least!) there are better alternatives.
+
+Ignoring this problem using a single quad with the two textures, I started playing around with @glTexEnv@ channel-specific compositing for combining the normal scene and the scene viewed through the breach.
+I seems that with @glTexEnv@ you lack information of the previously present pixels on the framebuffer, which could be thought of as the incoming fragment, on which you add stuff.
+In fact, the incoming fragment is only the potentially enlighted, colored vertex computed fragment. No more no less.
+
+I finally found the (obvious I shall admit) solution: using mere blending.
+To manipulate the previous values of the destination pixels you have to play with @glBlendFunc@.
+Blending relies on the alpha of either the source texture or the destination pixels.
+I can easily do the following:
+# Render first the transformed scene (laying farther than the breach)
+# Make sure the frame buffer is fully opaque
+  <pre>glColor4f(0,0,0,1);
+glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+glClear(GL_COLOR_BUFFER_BIT);
+glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);</pre>
+# Discard the depth buffer
+  <pre>glClear(GL_DEPTH_BUFFER_BIT);</pre>
+# Disable writing to the color components, leaving only the alpha
+  This way we will modulate (by default) full opacity with the breach transparency (equivalent to replacing alpha only)
+  <pre>glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);</pre>
+  If you want to use a replace alpha only using the replace semantic, make sure you use a GL_ALPHA texture and call
+  <pre>glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);</pre>
+# Render the breach in alpha, using 0s inside and 1s outside (to somehow control the opacity of the future fragments that will lay over the current image)
+# Disable our special preparation
+  <pre>glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);</pre>
+  Or if you used the replace semantic (setting back to the default value)
+  <pre>glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);</pre>
+# Discard the depth buffer again
+# Configure the blending to weight the source using the destination alpha, and to weight the destination using one minus the destination alpha
+  <pre>glEnable(GL_BLEND);
+glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);</pre>
+# Render the tesseled wall
+# Disable blending
+  <pre>glDisable(GL_BLEND);</pre>
+# Make the scene all opaque again if you wish
+
+Such an approach works at least, but it may be problematic:
+* You waste time rendering the transformed scene in the whole viewport
+* You do not detect if painting the transformed scene is even necessary
+* You cannot render recursively breaches seen through breaches
+
+h2. How to render the final scene
+
+Here is the final proposition (to be tested!) for the rendering:
+# Render the whole scene
+# Disable color and depth writes
+# Setup a shader that updates x/y min/max of pixels being submitted, apply no transformation
+# Use alpha-test to pass only pixels inside the breach hole (non fully opaque/transparent (depending on the meaning))
+# Attach the breach hole alpha-only texture
+# Set polygon offset to 1 ulp nearer
+# Render the breach hole quad (tesselation is of no use here)
+# We now have the coordinates for the scissor box
+# If we detect that these coordinates are inverted (max<min, as they should be initialized), the breach hole is not visible at all and we are done rendering
+# Set the scissor box
+# Capture the rendered image (alpha and color, maybe depth too), saving them in a 2D texture
+# Render the transformed scene in this exact same way (so that multiple breach recursion can work)
+# Draw back the saved image blending based on the saved image alpha channel
+# Merge depth according to the alpha test in an additionnal step, using saved image alpha channel (if it has not been transfered to the framebuffer)

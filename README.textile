@@ -1,0 +1,41 @@
+h1. Breach
+
+h2. Inspired from the game Portal, from Valve
+
+Breach is an attempt to recreate the core experience of the game Portal from Valve.
+
+The experience uses some OpenGL techniques to achieve the visual experience of a _spacial breach_ in the world (a teleportation tunnel toward another place).
+Those techniques are described in the @RENDERING@ file.
+
+h2. Evolution
+
+h3. Eventual goal
+
+Breach will become a puzzle game.
+It will leverage multiple kinds of breaches:
+* Uni/bi-directionnal
+* Static, user controlled
+* Small for objects, or big enough for the player
+* Filtering by kind of objects
+* Two breaches only, many interlinked breaches
+* Grouped, linking toward a random destination breach
+
+h3. Current status
+
+I didn't go very far yet.
+I experienced the following:
+* Lightning
+* Player motion (space like, no gravity)
+* Camera motion
+* Click shooting/selection
+* Outline of hidden breach
+* Transparent breach, showing what's behind
+
+h3. Forthcoming
+
+* Linking of two breaches, displaying the actual other end
+
+h3. Later future
+
+* Physics
+* Chiptune soundtrack!

@@ -78,17 +78,34 @@ Such an approach works at least, but it may be problematic:
 h2. How to render the final scene
 
 Here is the final proposition (to be tested!) for the rendering:
-# Render the whole scene
+# Have stencil buffer not messed up and filled with 0 by default at the first rendering level
+# Make the stencil test to pass only for values equal to @CURRENT_LEVEL@
+# Render the whole scene, leaving stencil stuff untouched
 # Disable color and depth writes
-# Setup a shader that updates x/y min/max of pixels being submitted, apply no transformation
-# Use alpha-test to pass only pixels inside the breach hole (non fully opaque/transparent (depending on the meaning))
+# Use alpha test to pass only pixels inside the breach hole (non fully opaque/transparent (depending on the meaning))
+# Clear stencil buffer, make stencil op to increment pixels passing (the previously applied alpha test) both the stencil test and the depth test
 # Attach the breach hole alpha-only texture
 # Set polygon offset to 1 ulp nearer
 # Render the breach hole quad (tesselation is of no use here)
-# We now have the coordinates for the scissor box
-# If we detect that these coordinates are inverted (max<min, as they should be initialized), the breach hole is not visible at all and we are done rendering
-# Set the scissor box
-# Capture the rendered image (alpha and color, maybe depth too), saving them in a 2D texture
-# Render the transformed scene in this exact same way (so that multiple breach recursion can work)
-# Draw back the saved image blending based on the saved image alpha channel
-# Merge depth according to the alpha test in an additionnal step, using saved image alpha channel (if it has not been transfered to the framebuffer)
+# Disable alpha test
+# Now the stencil buffer is equal to pass only for values equal to @CURRENT_LEVEL+1@
+# Clear the depth buffer
+  As stencil test is ignored by @glClear@, we have to create a 2D projection, draw over the full viewport to reset the depth buffer.
+  This will use stencil test as for normal drawing operations.
+  We take advantage of this process to have a visibility feedback
+## Disable depth test
+## Disable color writes
+## Push modelview and projection matrices
+## Load identity modelview and projection matrices
+## <pre>gluOrtho2D(0, windowWidth, 0, windowHeight);</pre>
+## Use @FEEDBACK@ mode (we only need to know if it will grow non empty, adapt the buffer size accordingly):
+### <pre>glBegin(GL_QUADS); glVertex3f(0,0,0); glVertex3f(0,1,0); glVertex3f(1,1,0); glVertex3f(1,0,0); glEnd();</pre>
+### If the feedback buffer is empty of @POINT@s, the final scene is rendered (because the breach is not visible at all)
+## Get back to @RENDER@ mode
+## <pre>glBegin(GL_QUADS); glVertex3f(0,0,0); glVertex3f(0,1,0); glVertex3f(1,1,0); glVertex3f(1,0,0); glEnd();</pre>
+## Pop modelview and projection matrices
+## Enable depth test to @GL_LESS@ (default value)
+## Enable color writes
+# Set blending to blend according to the destination alpha
+  _(This may make blending unavailable during rendering the scene)_
+# Render the transformed scene in this exact same way (for breach recursion)

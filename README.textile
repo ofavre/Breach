@@ -5,7 +5,7 @@ h2. Inspired from the game Portal, from Valve
 Breach is an attempt to recreate the core experience of the game Portal from Valve.
 
 The experience uses some OpenGL techniques to achieve the visual experience of a _spacial breach_ in the world (a teleportation tunnel toward another place).
-Those techniques are described in the @RENDERING@ file.
+Those techniques are described in the @RENDERING.textile@ file.
 
 h2. Evolution
 

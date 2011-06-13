@@ -1,14 +1,14 @@
 /**
  * @file main.cpp
- * 
+ *
  * @brief Main program.
- * 
+ *
  * @section LICENSE
- * 
+ *
  * Copyright (c) 2011 Olivier Favre
- * 
+ *
  * This file is part of Breach.
- * 
+ *
  * Licensed under the Simplified BSD License,
  * for details please see LICENSE file or the website
  * http://www.opensource.org/licenses/BSD-2-Clause
@@ -29,8 +29,13 @@
 #include <sys/time.h>
 #include <vector>
 
+using namespace std;
+
 #include "PngImage.hpp"
 #include "matrix.hpp"
+#include "renderable.hpp"
+#include "targets.hpp"
+#include "walls.hpp"
 
 /*! \def MIN(a,b)
  * @brief A macro that returns the minimum of \a a and \a b.
@@ -88,13 +93,13 @@ float playerSpeed = .01f;
  */
 float playerInclinaisonSpeed = .1f;
 //! @brief Player looking direction
-Matrix<float,4,1> playerLookAt ((float[4]){0, 0, 1, 1});
+Matrix<float,4,1> playerLookAt ((float[4]){0, 0, -1, 1});
 //! @brief Player position
-Matrix<float,4,1> playerPosition ((float[4]){0, 0, -.75f, 1});
+Matrix<float,4,1> playerPosition ((float[4]){0, 0, .75f, 1});
 //! @brief Player inclinaison vector (towards the current up)
 Matrix<float,4,1> playerInclinaison ((float[4]){0, 1, 0, 1});
 /** @brief Player moving directions.
- * 
+ *
  * One value per axis.
  * Should be between -1 and 1.
  * We use this array to track the desired moving directions,
@@ -122,115 +127,15 @@ struct Breach {
 };
 //! @brief The defined breaches
 Breach breaches[2] = {
-    { true,  Matrix<float,4,4>((float[]){BREACH_WIDTH,0,0,0, 0,BREACH_HEIGHT,0,0, 0,0,1,0, .5,.5,2,1}) },
+    { true,  Matrix<float,4,4>((float[]){BREACH_WIDTH,0,0,0, 0,BREACH_HEIGHT,0,0, 0,0,1,0, -.5,.5,-2,1}) },
     { false, Matrix<float,4,4>() }
 };
 
-/** @brief Defines a target.
- */
-struct Target {
-    //! @brief The X ordinate of the center of the target
-    float x;
-    //! @brief The Y ordinate of the center of the target
-    float y;
-    //! @brief The Z ordinate of the center of the target
-    float z;
-    //! @brief The size of the target
-    float size;
-    //! @brief Wether the target has already been hit
-    bool hit;
-};
-//! @brief The defined targets
-Target targets[] = {
-    { 0.0,  0.0,  4.0, 2.0, false },
-    { 0.0,  0.0,  1.0, 0.2, false },
-    { 0.0,  0.0,  0.0, 0.2, false },
-    { 0.0,  0.0,  0.5, 0.2, false },
-    { 0.6,  0.3, -1.0, 0.2, false },
-    { 0.5,  0.7, -0.5, 0.2, false },
-    { 0.3,  0.6,  0.5, 0.2, false },
-    { 0.8,  0.2,  1.0, 0.2, false },
-    { 0.6, -0.3, -1.0, 0.2, false },
-    { 0.5, -0.7, -0.5, 0.2, false },
-    { 0.3, -0.6,  0.5, 0.2, false },
-    { 0.8, -0.2,  1.0, 0.2, false },
-    {-0.6,  0.3, -1.0, 0.2, false },
-    {-0.5,  0.7, -0.5, 0.2, false },
-    {-0.3,  0.6,  0.5, 0.2, false },
-    {-0.8,  0.2,  1.0, 0.2, false },
-    {-0.6, -0.3, -1.0, 0.2, false },
-    {-0.5, -0.7, -0.5, 0.2, false },
-    {-0.3, -0.6,  0.5, 0.2, false },
-    {-0.8, -0.2,  1.0, 0.2, false },
-};
-//! @brief The number of targets defined
-int target_count = sizeof(targets)/sizeof(*targets);
 
-
-
-/**
- * @brief Issues a tesseled rectangle's primitives.
- *
- * Tesselation makes primitives less visible with smooth lightning.
- *
- * @todo Use call lists and transformations instead.
- *
- * @param x         Anchor coordinates
- * @param y         Anchor coordinates
- * @param z         Anchor coordinates
- * @param dx1       Direction of the first side of the rectangle
- * @param dy1       Direction of the first side of the rectangle
- * @param dz1       Direction of the first side of the rectangle
- * @param dx2       Direction of the second side of the rectangle
- * @param dy2       Direction of the second side of the rectangle
- * @param dz2       Direction of the second side of the rectangle
- * @param dtx1      Texture coordinate delta along the first side of the rectangle
- * @param dty1      Texture coordinate delta along the first side of the rectangle
- * @param dtx2      Texture coordinate delta along the second side of the rectangle
- * @param dty2      Texture coordinate delta along the second side of the rectangle
- * @param steps1    Number of steps to take to reach the end of the first side of the rectangle
- * @param steps2    Number of steps to take to reach the end of the second side of the rectangle
- */
-void drawTesseledRectangle(float x, float y, float z, float dx1, float dy1, float dz1, float dx2, float dy2, float dz2, float dtx1, float dty1, float dtx2, float dty2, int steps1, int steps2) {
-    glBegin(GL_QUADS);
-    dx1 /= steps1;
-    dy1 /= steps1;
-    dz1 /= steps1;
-    dx2 /= steps2;
-    dy2 /= steps2;
-    dz2 /= steps2;
-    dtx1 /= steps1;
-    dty1 /= steps2;
-    dtx2 /= steps1;
-    dty2 /= steps2;
-    float _x = x;
-    float _y = y;
-    float _z = z;
-    float _tx = 0;
-    float _ty = 0;
-    for (int s1 = 0 ; s1 < steps1 ; s1++, _x += dx1, _y += dy1, _z += dz1, _tx += dtx1, _ty += dty1) {
-        float __x = 0;
-        float __y = 0;
-        float __z = 0;
-        float __tx = 0;
-        float __ty = 0;
-        for (int s2 = 0 ; s2 < steps2 ; s2++, __x += dx2, __y += dy2, __z += dz2, __tx += dtx2, __ty += dty2) {
-            glTexCoord2f(_tx+__tx, _ty+__ty);
-            glVertex3f(_x+__x, _y+__y, _z+__z);
-            glTexCoord2f(_tx+__tx+dtx1, _ty+__ty+dty1);
-            glVertex3f(_x+__x+dx1, _y+__y+dy1, _z+__z+dz1);
-            glTexCoord2f(_tx+__tx+dtx1+dtx2, _ty+__ty+dty1+dty2);
-            glVertex3f(_x+__x+dx1+dx2, _y+__y+dy1+dy2, _z+__z+dz1+dz2);
-            glTexCoord2f(_tx+__tx+dtx2, _ty+__ty+dty2);
-            glVertex3f(_x+__x+dx2, _y+__y+dy2, _z+__z+dz2);
-        }
-    }
-    glEnd();
-}
 
 /**
  * @brief Renders the scene primitives.
- * 
+ *
  * @param forSelection Whether the scene should be rendered for selection test
  *                     using names, or for normal rendering using colors.
  */
@@ -240,17 +145,20 @@ void draw_scene(bool forSelection = false) {
         if (breaches[0].opened) {
 
             // Test fake far scene (simply draw a target behind the wall)
-#if 1
+            GLfloat mat_ambiant[] = { 1, 1, 1, 1 };
+            GLfloat mat_diffuse[] = { 1, 1, 1, 1 };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambiant);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
             glColor4f(1.0, 1.0, 1.0, 1.0);
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_ALPHA_TEST);
-            glAlphaFunc(GL_GREATER, 0.2f);
+            glAlphaFunc(GL_GREATER, 0.75f);
             glBindTexture(GL_TEXTURE_2D, target_texture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            float x = 0, y = 0, z = 3, size = 1.9/2;
+            float x = 0, y = 0, z = -3, size = 1.9/2;
             glBegin(GL_QUADS);
             glNormal3f(0, 0, 1);
             glTexCoord2f(0.0f, 0.0f);
@@ -260,11 +168,10 @@ void draw_scene(bool forSelection = false) {
             glTexCoord2f(1.0f, 1.0f);
             glVertex3f(x+size, y+size, z);
             glTexCoord2f(0.0f, 1.0f);
-            glVertex3f(x-size, y+size, z);
+            glVertex3f(x-size, y=size, z);
             glEnd();
             glDisable(GL_ALPHA_TEST);
             glDisable(GL_BLEND);
-#endif
 
         }
     }
@@ -303,16 +210,9 @@ void draw_scene(bool forSelection = false) {
         }
     }
     // (Draw the wall even if there is no breach on it, or if we are in selection mode)
-    if (forSelection) glLoadName(0);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wall_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
-    glNormal3f(0, 0, 1);
-    drawTesseledRectangle(-1, -1, 2, 2, 0, 0, 0, 2,  0, 10, 0, 0, 10, 50, 50);
+    wallsRenderer->fullRender(forSelection ? GL_SELECT : GL_RENDER);
     glDisable(GL_BLEND);
     if (!forSelection) {
         // Make the framebuffer all opaque again // not sure it's useful
@@ -321,118 +221,85 @@ void draw_scene(bool forSelection = false) {
         glClear(GL_COLOR_BUFFER_BIT);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-    // Draw the other walls, even in selection mode
-    if (forSelection) glLoadName(0);
-    glBindTexture(GL_TEXTURE_2D, wall_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glNormal3f(0, 0, 1);
-    drawTesseledRectangle(-1, -1, -2, 2, 0, 0, 0, 2,  0, 10, 0, 0, 10, 50, 50);
-    glNormal3f(0, 1, 0);
-    drawTesseledRectangle(-1, -1, 2, 2, 0, 0, 0, 0, -4, 10, 0, 0, 20, 50, 100);
-    glNormal3f(0, 1, 0);
-    drawTesseledRectangle(-1,  1, 2, 2, 0, 0, 0, 0, -4, 10, 0, 0, 20, 50, 100);
-    glFrontFace(GL_CW);
-    glNormal3f(1, 0, 0);
-    drawTesseledRectangle(-1, -1, 2, 0, 2, 0, 0, 0, -4, 10, 0, 0, 20, 50, 100);
-    glFrontFace(GL_CW);
-    glNormal3f(1, 0, 0);
-    drawTesseledRectangle( 1, -1, 2, 0, 2, 0, 0, 0, -4, 10, 0, 0, 20, 50, 100);
-    glFrontFace(GL_CCW);
-    glDisable(GL_TEXTURE_2D);
 
     if (!forSelection) {
         // Draw lines from the wall to the targets
         glColor4f(1.0, 1.0, 1.0, 1.0);
-        for (int i = 0 ; i < target_count ; i++) {
-            float x = targets[i].x;
-            float y = targets[i].y;
-            float z = targets[i].z;
+        for (vector<Target>::iterator it = targets.begin() ; it < targets.end() ; it++) {
+            Target& t = *it;
+            float x = t.getX();
+            float y = t.getY();
+            float z = t.getZ();
 
+            glNormal3f(0, 0, 1);
             glBegin(GL_LINES);
-            glNormal3f(0, 0, 1);
-            glVertex3f(x, y, 2);
-            glNormal3f(0, 0, 1);
+            glVertex3f(x, y, -2);
             glVertex3f(x, y, z);
             glEnd();
         }
     }
 
-    if (!forSelection) {
-        // Configure for rendering the targets
-        glColor4f(1.0, 1.0, 1.0, 1.0);
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 0.75f);
-        glBindTexture(GL_TEXTURE_2D, target_texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-    }
-    for (int i = 0 ; i < target_count ; i++) {
-        if (targets[i].hit) continue;
-        if (forSelection) glLoadName(i+1);
-
-        float x = targets[i].x;
-        float y = targets[i].y;
-        float z = targets[i].z;
-        float size = targets[i].size;
-
-        if (!forSelection) {
-            // Draw the target
-            glNormal3f(0, 0, 1);
-            drawTesseledRectangle(x-size, y-size, z, size*2, 0, 0, 0, size*2,  0, 1, 0, 0, 1, 10, 10);
-        } else {
-            // For selection test, use a disc-shaped polygon (even approximate), because ALPHA_TEST does not work
-            glBegin(GL_TRIANGLE_FAN);
-            glVertex3f(x, y, z);
-            for (float angle = 0.0f; angle < (2.0f * 3.14159) + 0.3f; angle += 0.3f) {
-                double vectorX = x + (size * (float) sin((double) angle));
-                double vectorY = y + (size * (float) cos((double) angle));
-                glVertex3f(vectorX, vectorY, z);
-            }
-            glEnd();
-        }
-    }
-    if (!forSelection) {
-        // Tear down configuration for drawing the targets
-        glDisable(GL_ALPHA_TEST);
-        glDisable(GL_BLEND);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_TEXTURE_2D);
-    }
+    targetsRenderer->fullRender(forSelection ? GL_SELECT : GL_RENDER);
 
     if (!forSelection) {
         if (breaches[0].opened) {
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
             // Draw the outline of the hidden breach
-            GLfloat mat_ambiant[] = { 1, .5, 0, 1 };
-            GLfloat mat_diffuse[] = { 1, .5, 0, 1 };
+            GLfloat mat_ambiant[] = { 10, 5, 0, 1 };
+            GLfloat mat_diffuse[] = { 10, 5, 0, 1 };
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambiant);
             glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
+            glNormal3f(0, 0, 1);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, breachhidden_texture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glPolygonOffset(0, -1);
-            glDepthFunc(GL_GREATER);
-            glNormal3f(0, 0, 1);
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             glMultMatrixf(breaches[0].transformation.values);
-            drawTesseledRectangle(-1, -1, 0, 2, 0, 0, 0, 2,  0, 1, 0, 0, 1, 10, 10);
-            glPopMatrix();
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(0, -10);
+
+            // Appear on top of occulting objects
+            glDisable(GL_CULL_FACE);
+            glDepthFunc(GL_GREATER);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0,0);
+            glVertex3f(-1, -1, 0);
+            glTexCoord2f(1,0);
+            glVertex3f( 1, -1, 0);
+            glTexCoord2f(1,1);
+            glVertex3f( 1,  1, 0);
+            glTexCoord2f(0,1);
+            glVertex3f(-1,  1, 0);
+            glEnd();
+
+            // Appear directly onto the porting wall (only when seen from the cull face)
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_FRONT);
             glDepthFunc(GL_LESS);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0,0);
+            glVertex3f(-1, -1, 0);
+            glTexCoord2f(1,0);
+            glVertex3f( 1, -1, 0);
+            glTexCoord2f(1,1);
+            glVertex3f( 1,  1, 0);
+            glTexCoord2f(0,1);
+            glVertex3f(-1,  1, 0);
+            glEnd();
+            glCullFace(GL_BACK);
+            glDepthFunc(GL_LESS);
+
             glPolygonOffset(0, 0);
             glDisable(GL_POLYGON_OFFSET_FILL);
+            glPopMatrix();
             glDisable(GL_BLEND);
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_TEXTURE_2D);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         }
     }
 
@@ -445,7 +312,6 @@ void draw_scene(bool forSelection = false) {
  *                     using names, or for normal rendering using colors.
  */
 void doDisplay(bool forSelection = false) {
-
     // Move player
     if (playerAdvance[0] != 0 || playerAdvance[1] != 0 || playerAdvance[2] != 0) {
         playerPosition = playerPosition + (playerLookAt*playerAdvance[0] - playerInclinaison*playerLookAt*playerAdvance[1] + playerInclinaison*playerAdvance[2]) * playerSpeed;
@@ -469,36 +335,30 @@ void doDisplay(bool forSelection = false) {
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
         glEnable(GL_DEPTH_TEST);
 
-        // Configure some global material
-        GLfloat mat_ambiant[] = { .2, .2, .2, 1 }; // default: .2,.2,.2,1
-        GLfloat mat_diffuse[] = { .8, .8, .8, 1 }; // default: .8,.8,.8,1
-        GLfloat mat_specular[] = { 1, 1, 1, 1 }; // default: 0,0,0,1
-        GLfloat mat_shininess[] = { 128 }; // default: 0, range [0-128]
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambiant);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-
         // Configure a positionnal light
-        GLfloat light_ambient[] = { .3, .3, .3, 0 };
-        GLfloat light_diffuse[] = { 1, 1, 1, 0 };
-        GLfloat light_specular[] = { 5, 5, 5, 0 };
+        GLfloat light_ambient[] = { 0, 0, 0, 1 };
+        GLfloat light_diffuse[] = { 1, 1, 1, 1 };
+        GLfloat light_specular[] = { 1, 1, 1, 1 };
         //GLfloat light_position[] = { playerPosition[0], playerPosition[1], playerPosition[2], 1 }; // the player sheds its own light
         GLfloat light_position[] = { 0, 0, 0, 1 };
         glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
         glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
         glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
         glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-        glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0);
-        glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 1);
+        glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
+        glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, .5);
+        glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 1);
         // Configure a global light
-        GLfloat lmodel_ambient[] = { .5, .5, .5, 0 };
+        GLfloat lmodel_ambient[] = { .1, .1, .1, 1 };
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
         glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+        //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
     }
+
+    glEnable(GL_CULL_FACE);
 
     draw_scene(forSelection);
 
@@ -576,7 +436,6 @@ void doSelection(int x, int y) {
     glSelectBuffer(sizeof(buffer)/sizeof(*buffer), buffer);
     glRenderMode(GL_SELECT);
     glInitNames();
-    glPushName(0);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -595,18 +454,47 @@ void doSelection(int x, int y) {
 
     printf("%d hits ! (including walls...)\n", hits);
     if (hits > 0) {
-        // Find the closest object
-        int choose = buffer[3];
-        int depth = buffer[1];
-        for (int loop = 1 ; loop < hits ; loop++) {
-            if (buffer[loop * 4 + 1] < GLuint(depth)) {
-                choose = buffer[loop * 4 + 3];
-                depth = buffer[loop * 4 + 1];
+        float leastdepth = -1;
+        GLuint *ptr = buffer;
+        GLuint *closestHit = NULL;
+
+        for (int i = 0 ; i < hits ; i++) { /*  for each hit  */
+            GLuint nameCount = ptr[0];
+            GLfloat z1 = ptr[1] / (float)0x7fffffff;
+            GLfloat z2 = ptr[2] / (float)0x7fffffff;
+            printf (" number of names for hit = %u\n", nameCount);
+            printf("  z1 is %g", z1);
+            printf(" z2 is %g\n", z2);
+            if (closestHit == NULL || z1 < leastdepth) {
+                leastdepth = z1;
+                closestHit = ptr;
             }
+            ptr += 3;
+            printf ("  the name is:");
+            for (unsigned int j = 0; j < nameCount; j++) {     /*  for each name */
+                GLuint name = ptr[j];
+                printf (" %u", name);
+                if (j == 0 && name == 1) {
+                    printf("(targets)");
+                } else if (j == 0 && name == 2) {
+                    printf("(walls)");
+                }
+            }
+            ptr += nameCount;
+            printf ("\n");
         }
 
-        choose--;
-        targets[choose].hit = true;
+        if (closestHit != NULL) {
+            GLuint nameCount = *closestHit;
+            if (nameCount >= 2) {
+                closestHit += 3;
+                if (closestHit[0] == 1) {
+                    printf("Target %u hit!\n", closestHit[1]);
+                    targets[closestHit[1]-1].setHit();
+                }
+            }
+            printf("\n");
+        }
     }
 }
 
@@ -748,11 +636,12 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
     // Initialisation sugar, optionnal
-    //glutInitContextVersion(4, 0);
-    ////glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+    glutInitContextVersion(3, 2); // 3.2 is the maximum value still avoiding Compiz blinking
+    //glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     //glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
-    ////glutInitContextProfile(GLUT_CORE_PROFILE | GLUT_COMPATIBILITY_PROFILE);
-    ////glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+    //glutInitContextFlags(GLUT_DEBUG);
+    //glutInitContextProfile(GLUT_CORE_PROFILE | GLUT_COMPATIBILITY_PROFILE);
+    //glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
     //glutInitContextProfile(GLUT_CORE_PROFILE);
 
     // Configure OpenGL and register callbacks
@@ -774,18 +663,12 @@ int main(int argc, char** argv) {
     PngImage* pi_target = new PngImage();
     pi_target->read_from_file("resources/target.png");
     target_texture = texs[0];
-    glBindTexture(GL_TEXTURE_2D, target_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, pi_target->getGLInternalFormat(), pi_target->getWidth(), pi_target->getHeight(), 0, pi_target->getGLFormat(), GL_UNSIGNED_BYTE, pi_target->getTexels());
+    Texture targetTexture (target_texture, pi_target->getGLInternalFormat(), pi_target->getWidth(), pi_target->getHeight(), pi_target->getGLFormat(), pi_target->getTexels());
     // Wall
     PngImage* pi_wall = new PngImage();
-    pi_wall->read_from_file("resources/walls.png");
+    pi_wall->read_from_file("resources/brushed-walls.png");
     wall_texture = texs[1];
-    glBindTexture(GL_TEXTURE_2D, wall_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, pi_wall->getWidth(), pi_wall->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, pi_wall->getTexels());
+    Texture wallTexture (wall_texture, GL_RGB8, pi_wall->getWidth(), pi_wall->getHeight(), GL_RGB, pi_wall->getTexels());
     // Breach hole, alpha only
     PngImage* pi_breach = new PngImage();
     pi_breach->read_from_file("resources/breach-alpha.png");
@@ -811,6 +694,9 @@ int main(int argc, char** argv) {
     pi_breach = NULL;
     delete pi_breachhidden;
     pi_breachhidden = NULL;
+
+    initTargets(targetTexture);
+    initWalls(wallTexture);
 
     // Let OpenGL control the program through its main loop
     glutMainLoop();

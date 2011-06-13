@@ -20,7 +20,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring> // memcpy
-#include <ostream>
+#include <iostream>
 
 /**
  * @brief Represents a matrix.
@@ -60,6 +60,16 @@ class Matrix {
          * @see take(Value[cols*lines])
          */
         Matrix(const Value values[cols*lines]);
+        /**
+         * @brief Constructor that uses the given arguments as a 1D array to fill the matrix.
+         *
+         * @param enoughValues List of values you would have given as an array to \link Matrix(const Value[cols*lines]) \endlink.
+         *                     Please pay attention to the number of values given: exactly \a cols times \a lines will be read.
+         *                     Failing to given enough values may result in unexpected behaviors,
+         *                     in addition to filling the matrix with unspecified values.
+         * @see Matrix(const Value[cols*lines])
+         */
+        Matrix(Value enoughValues, ...);
         /**
          * @brief Destructor.
          */
@@ -221,7 +231,7 @@ namespace MatrixHelper {
      * @param angle Amount of rotation to be used.
      * @param axis  Axis of the rotation, as a 4D vector.
      *              The last component should be equal to 1, and is ignored.
-     * @see Matrix::rotation(double angle, const Matrix<Value,3,1> &axis)
+     * @see MatrixHelper::rotation(double angle, const Matrix<Value,3,1> &axis)
      */
     template <typename Value>
     Matrix<Value,4,4> rotation(double angle, const Matrix<Value,4,1> &axis);
@@ -247,7 +257,7 @@ namespace MatrixHelper {
      * @brief Generates a 4x4, 3D translation matrix.
      *
      * @param vector 3D translation vector.
-     * @see Matrix::translation(Value x, Value y, Value z)
+     * @see MatrixHelper::translation(Value x, Value y, Value z)
      */
     template <typename Value>
     Matrix<Value,4,4> translation(const Matrix<Value,3,1> &vector);
@@ -256,10 +266,50 @@ namespace MatrixHelper {
      *
      * @param vector 4D translation vector.
      *               The last component should be equal to 1, and is ignored.
-     * @see Matrix::translation(Value x, Value y, Value z)
+     * @see MatrixHelper::translation(Value x, Value y, Value z)
      */
     template <typename Value>
     Matrix<Value,4,4> translation(const Matrix<Value,4,1> &vector);
+    /**
+     * @brief Generates a 4x4, 3D scaling matrix.
+     *
+     * @param x Scaling factor in the X axis.
+     * @param y Scaling factor in the Y axis.
+     * @param z Scaling factor in the Z axis.
+     * @return A 4x4 scaling matrix defined as
+     *         \f[
+                    \left(\begin{array}{cccc}
+                        x   &   0   &   0   &   0   \\
+                        0   &   y   &   0   &   0   \\
+                        0   &   0   &   z   &   0   \\
+                        0   &   0   &   0   &   1
+                    \end{array}\right)
+                \f]
+     */
+    template <typename Value>
+    Matrix<Value,4,4> scaling(Value x, Value y, Value z);
+    /**
+     * @brief Generates a 4x4, 3D scaling matrix.
+     *
+     * @param vector 3D scaling vector.
+     * @see MatrixHelper::scaling(Value x, Value y, Value z)
+     */
+    template <typename Value>
+    Matrix<Value,4,4> scaling(const Matrix<Value,3,1> &vector);
+    /**
+     * @brief Generates a 4x4, 3D scaling matrix.
+     *
+     * @param vector 4D scaling vector.
+     *               The last component should be equal to 1, and is ignored.
+     * @see MatrixHelper::scaling(Value x, Value y, Value z)
+     */
+    template <typename Value>
+    Matrix<Value,4,4> scaling(const Matrix<Value,4,1> &vector);
+    /**
+     * @brief Generates a 4x4, identity transformation matrix.
+     */
+    template <typename Value>
+    Matrix<Value,4,4> identity();
     /**
      * @brief Pretty-prints the given matrix in the specified output stream.
      *
@@ -267,7 +317,7 @@ namespace MatrixHelper {
      * @param out    Output stream to use
      */
     template <typename Value, unsigned int lines, unsigned int cols>
-    void print(const Matrix<Value,lines,cols> matrix, std::ostream& out);
+    void print(const Matrix<Value,lines,cols> matrix, std::ostream& out = std::cout);
     /**
      * @brief Generates a unit vector, for the desired axis.
      *
@@ -282,7 +332,7 @@ namespace MatrixHelper {
      * @param axis Axis whose value should be equal to one unit
      * @return A vector like \f$ (1,0,0,1)^\top \f$, \f$ (0,1,0,1)^\top \f$ or \f$ (0,0,1,1)^\top \f$.
      *         Note that the fourth component is always 1.
-     * @see Matrix::unitRotationAxisVector(unsigned int axis)
+     * @see MatrixHelper::unitRotationAxisVector(unsigned int axis)
      */
     template <typename Value>
     Matrix<Value,4,1> unitAxisVector(unsigned int axis);

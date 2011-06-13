@@ -23,6 +23,10 @@
 
 
 
+#include <cstdarg>
+
+
+
 template <typename Value, unsigned int lines, unsigned int cols>
 Matrix<Value,lines,cols>::Matrix()
 {
@@ -38,6 +42,22 @@ template <typename Value, unsigned int lines, unsigned int cols>
 Matrix<Value,lines,cols>::Matrix(const Value values[cols][lines])
 {
     take(values);
+}
+
+template <typename Value, unsigned int lines, unsigned int cols>
+Matrix<Value,lines,cols>::Matrix(Value enoughValues, ...)
+{
+    va_list args;
+    va_start(args, enoughValues);
+    Value* ptr = values;
+    *ptr = enoughValues;
+    ptr++;
+    for (unsigned int i = lines*cols-1 ; ; --i) {
+        *ptr = va_arg(args, Value);
+        ptr++;
+        if (i == 0) break;
+    }
+    va_end(args);
 }
 
 template <typename Value, unsigned int lines, unsigned int cols>
@@ -119,6 +139,43 @@ Matrix<Value,4,4> MatrixHelper::translation(const Matrix<Value,3,1> &vector)
         rtn(i,i) = static_cast<Value>(1);
     }
     rtn(3,3) = static_cast<Value>(1);
+    return rtn;
+}
+template <typename Value>
+Matrix<Value,4,4> MatrixHelper::scaling(Value x, Value y, Value z)
+{
+    return MatrixHelper::scaling<Value>(Matrix<Value,3,1>((Value[3]){x,y,z}));
+}
+template <typename Value>
+Matrix<Value,4,4> MatrixHelper::scaling(const Matrix<Value,4,1> &vector)
+{
+    return MatrixHelper::scaling<Value>(Matrix<Value,3,1>(vector.values));
+}
+template <typename Value>
+Matrix<Value,4,4> MatrixHelper::scaling(const Matrix<Value,3,1> &vector)
+{
+    /*
+     *  / x 0 0 0 \
+     * |  0 y 0 0  |
+     * |  0 0 z 0  |
+     *  \ 0 0 0 1 /
+     */
+    Matrix<Value,4,4> rtn;
+    rtn.fill(static_cast<Value>(0));
+    for (unsigned int i = 0 ; i < 3 ; ++i) {
+        rtn(i,i) = vector(i,0);
+    }
+    rtn(3,3) = static_cast<Value>(1);
+    return rtn;
+}
+template <typename Value>
+Matrix<Value,4,4> MatrixHelper::identity()
+{
+    Matrix<Value,4,4> rtn;
+    rtn.fill(static_cast<Value>(0));
+    for (unsigned int i = 0 ; i < 4 ; ++i) {
+        rtn(i,i) = static_cast<Value>(1);
+    }
     return rtn;
 }
 

@@ -24,9 +24,8 @@
  * @brief Executes unit tests for the Matrix library.
  */
 int main() {
-    Matrix<int,3,1> vector3;
+    Matrix<int,3,1> vector3(20,200,2000);
     int vector3_values[3] = { 20, 200, 2000 };
-    vector3.take(vector3_values);
     assert(vector3(0,0) == vector3_values[0]);
     assert(vector3(1,0) == vector3_values[1]);
     assert(vector3(2,0) == vector3_values[2]);
@@ -34,6 +33,10 @@ int main() {
     Matrix<int,4,1> vector4;
     int vector4_values[4] = { 5, 50, 500, 1 };
     vector4.take(vector4_values);
+    assert(vector4(0,0) == vector4_values[0]);
+    assert(vector4(1,0) == vector4_values[1]);
+    assert(vector4(2,0) == vector4_values[2]);
+    assert(vector4(3,0) == vector4_values[3]);
 
     Matrix<int,4,4> translation = MatrixHelper::translation(vector3);
     assert(translation(0,0) == 1);

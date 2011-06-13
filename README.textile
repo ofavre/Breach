@@ -24,15 +24,17 @@ h3. Current status
 
 I didn't go very far yet.
 I experienced the following:
-* Lightning
-* Player motion (space like, no gravity)
+* Lighting
+* Player motion (space like, no gravity, no collision test)
 * Camera motion
 * Click shooting/selection
 * Outline of hidden breach
 * Transparent breach, showing what's behind
+* Rendering engine
 
 h3. Forthcoming
 
+* Shooting breaches
 * Linking of two breaches, displaying the actual other end
 
 h3. Later future

@@ -1,0 +1,202 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+		<meta charset="UTF-8"/>
+		<title>Breach - Project homepage</title>
+		<style type="text/css">
+			body {
+				font: 13.25px helvetica,arial,freesans,clean,sans-serif;
+			}
+			img {
+				border: 0;
+			}
+			pre.block {
+				margin-left: 8ex;
+			}
+			.monospaced {
+				font-family: monospace, courier new, courier;
+			}
+		</style>
+	</head>
+	<body>
+		<h1><a id="top">Breach - A (soon to be) 3D spacial puzzle</a></h1>
+		<p>
+		Like any project, in order to grasp what it is... you have to skip the boring lines and skip to the <a href="#what">eye-catching lists</a> or the <a href="#screenshots">screenshots</a>! ;-)<br/>
+		If you're a geek, you may be interested in <a href="#geek">technical details</a>.
+		</p>
+
+		<h2><a id="inspired">Inspired from the game Portal, from Valve.</a></h2>
+		<p>
+		Breach is an attempt to recreate the core experience of the game Portal from Valve.
+		</p>
+		<p>
+		The experience uses some OpenGL techniques to achieve the visual experience of a spacial breach in the world (a teleportation tunnel toward another place).
+		</p>
+
+		<h2><a id="warnings">Pre-alpha early-stage bleeding-edge experiment, proof of concept, open source and free software</a></h2>
+		<pre style="margin-bottom: 0">THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.</pre>
+		<p style="margin-top: 0">
+		<span style="font-style: italic">(I finally find the caps words from open source licences very funny and sometimes quite accurate!)</span>
+		</p>
+		<p>
+		You have been warned! This project is personnal and recreational.<br/>
+		However, rather than just keeping it for myself, I decided to make it live in the real world, out in the open...<br/>
+		In the open indeed, this projets is licenced under the new BSD licence and is therefore. 
+		</p>
+		<p>
+		Hosted by GitHub, you can find the development webpages here: <a href="https://github.com/ofavre/Breach">https://github.com/ofavre/Breach</a>.
+		</p>
+
+		<h2><a id="goal">Eventual goal</a></h2>
+		<p>
+		Like any free software this project has its own philosophy, bringing a better world is its sole goal.<br/>
+		This project will use two approaches to reach this ultimate utopia: knowledge and fun!
+		</p>
+		<p>
+		<a id="goal-knowledge"><span style="font-weight: bold">Knowledge</span></a> is important, without it the only thing you can do is... getting some.<br/>
+		As any open source software, the knowledge part comes with your right to study its source code.<br/>
+		You I remind you that sources are quickly and easily browsable online? Simply head toward <a href="https://github.com/ofavre/Breach">https://github.com/ofavre/Breach</a>, it's straightforward, on GitHub the project homepage exposes the source right away.<br/>
+		Should you be a git user, a read-only access can easily be gained from your desktop through the following commands:
+		</p>
+		<pre class="block" style="margin-top: -1em; margin-bottom: -1em;">git clone https://github.com/ofavre/Breach.git Breach</pre>
+		<p>or a bit faster, using the native git protocol (may not work if your network administrator is paranoid):</p>
+		<pre class="block" style="margin-top: -1em; margin-bottom: -1em;">git clone git://github.com/ofavre/Breach.git Breach</pre>
+		<p>
+		Unfortunately, you cannot gain write access that easily.<br/>
+		To become a contributor, you should ask the project owner. But you know, humans are not reliable...<br/>
+		This is why GitHub is so useful. In addition to making source easily available and easying community creation,
+		it enables <span style="font-style: italic">you</span> to benefit from these services as easily: <span style="text-decoration: underline">any project is just a fork away</span>!<br/>
+		After forking Breach, you will own a copy of it, which you will be the owner of!
+		</p>
+		<p>
+		<a id="goal-fun"><span style="font-weight: bold">Fun</span></a> is equally important to each and every one of us.<br/>
+		Even the most boresome person you may encounter takes great pleasure at his daily routine.
+		He simply does not call it fun because he sees people &quot;having fun&quot; crazy people, but that routine is <span style="font-style: italic">his</span> fun.<br/>
+		I am having fun building this project, I hope you will have fun studying it (in its early stage) and playing it (in a more mature stage).<br/>
+		Enough pseudo philosophical bla bla, let's be pragmatic and unveil what's hidden under this enigmatic name!
+		</p>
+
+		<h1><a id="what">Hey, what is this stuff?</a></h1>
+		<p>
+		Breach will become a 3D spacial puzzle game.<br/>
+		It is inspired by the game <a href="http://www.valvesoftware.com/games/portal.html">Portal from Valve</a>.<br/>
+		But you've guessed it, this game has nothing to do with its famous big brother: we're talking about <span style="font-style: italic">breaches</span>, not portals!
+		</p>
+		<p>
+		It will leverage multiple kinds of breaches:
+		</p>
+		<ul style="margin-top: -0.5em">
+			<li>Uni- or bi-directionnal</li>
+			<li>Static or user controlled</li>
+			<li>Small for objects or big enough for the player</li>
+			<li>Filtering by kind of objects</li>
+			<li>Two breaches only or many interlinked breaches</li>
+			<li>Grouped breaches, linking toward a random destination</li>
+		</ul>
+
+		<h2><a id="status">Current status</a></h2>
+		<p>
+		As an OpenGL learner myself, I didn’t go very far yet.<br/>
+		</p>
+		<p>
+		I have experienced the following:
+		</p>
+		<ul style="margin-top: -0.5em">
+			<li>Rendering engine higher level layer</li>
+			<li>Lighting</li>
+			<li>Player motion (space like, no gravity, no collision test)</li>
+			<li>Camera motion</li>
+			<li>Click shooting/selection</li>
+			<li>Outline of hidden breach</li>
+			<li>Transparent breach, showing another world behind (also visible by walking around the breach for now)</li>
+		</ul>
+
+		<h2><a id="forthcoming">Forthcoming</a></h2>
+		<p>
+		Here is my big lines todo list:
+		</p>
+		<ul style="margin-top: -0.5em">
+			<li>Shooting breaches</li>
+			<li>Linking of two breaches, displaying the actual other end</li>
+		</ul>
+
+		<h2><a id="future">Later future</a></h2>
+		<p>
+		Another part of my todo list, but this may take more time:
+		</p>
+		<ul style="margin-top: -0.5em">
+			<li>Collision test</li>
+			<li>Physics</li>
+			<li>Chiptune soundtrack!</li>
+		</ul>
+
+		<h1><a id="screenshots">Screenshots</a></h1>
+		<p>
+		Yes, I guess it's time for screenshots, too.
+		</p>
+		<h3>Initial view</h3>
+		<a href="images/initial-view.png" target="_blank"><img src="images/initial-view-small.png" alt="Initial view"/></a>
+		<p>
+		The biggest target looks dark because the light is situated at the center of the room, right behind it.<br/>
+		You can see the breach in the back wall, and it's outline to help you remember where you left the breach opened.
+		</p>
+		<h3>After shooting some targets</h3>
+		<a href="images/initial-view-aftershooting.png" target="_blank"><img src="images/initial-view-aftershooting-small.png" alt="Initial view after shooting some targets"/></a>
+		<p>
+		Now the breach is fully visible. It shows a distant scene (well... this is a fake distance scene, a mere target behind the wall).
+		</p>
+		<h3>A bit of perspective</h3>
+		<a href="images/perspective-view-withoutline.png" target="_blank"><img src="images/perspective-view-withoutline-small.png" alt="A perspective view, with the breach outline"/></a>
+		<p>
+		This view let's you appreciate the lighting of the brushed metal walls and the spacial repartition of the targets.
+		</p>
+		<h3>Close-up on the breach</h3>
+		<a href="images/closeup-withoutline.png" target="_blank"><img src="images/closeup-withoutline-small.png" alt="Close-up on the breach, with the breach outline"/></a>
+		<p>
+		Here we take a closer view on the breach, its outline and the distant scene.<br/>
+		(The distant scene moves, it's not a mere texture for faking distant surroundings, it's more like a window to another world)
+		</p>
+
+		<h1><a id="geek">I'm a geek, what is it made of?</a></h1>
+		<p>
+		Hello geeky, I knew you would come here! Everything's fine 'till now?
+		</p>
+		<p>
+		Breach is a Linux OpenGL software under new BSD licence.<br/>
+		It's entirely written in C++ and uses a single makefile to build, test, run, and generate documentation.
+		</p>
+
+		<h2><a id="requirements">Requirements</a></h2>
+		<ul>
+			<li>A computer with a graphic card, even a dummy one</li>
+			<li>A graphical window manager. Sorry console addicts, this game is not CLI and do not use ncurse or libcaca for rendering...</li>
+			<li>Libraries development headers like <span class="monospaced">freeglut3-dev</span>, <span class="monospaced">libpng12-dev</span> (maybe a bunch of other as well, but I do not depend on them directly)</li>
+			<li>Compilation tools like <span class="monospaced">make</span>, <span class="monospaced">build-essential</pre></li>
+			<li>Some programming and compilation skills and time, if compilation is problematic</li>
+		</ul>
+
+		<h2><a id="compiling-running">Compiling and running</a></h2>
+		<p>
+		Simply issue the following lines:
+		</p>
+		<pre class="block">cd Breach
+make compile
+make run</pre>
+		<p>
+		As compilation is needed for running the game, you may simply issue the last command.
+		</p>
+		<p>
+		If you wish to generate the documentation, issue the following:
+		</p>
+		<pre class="block">make doc</pre>
+		<p>
+		You will find the documentation under <span class="monospaced">Breach/doc/html/index.html</span>.<br/>
+		If you have a <span style="font-family: times new roman">L<sup>A</sup>T<sub>E</sub>X</span> distribution,
+		you can find the PDF under <span class="monospaced">Breach/doc/latex/refman.pdf</span>.<br/>
+		If you don't, the makefile may prompt some harmless errors or warnings, you can safely ignore them.
+		</p>
+	</body>
+</html>

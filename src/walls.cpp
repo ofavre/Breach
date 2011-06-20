@@ -117,8 +117,8 @@ void initWalls(Texture texture)
     walls.push_back(Wall(Matrix<float,4,1>((float[]){-1,-1, 2,1}), Matrix<float,3,1>((float[]){0,0,-4}), Matrix<float,3,1>((float[]){0,2,0})));
     walls.push_back(Wall(Matrix<float,4,1>((float[]){ 1,-1,-2,1}), Matrix<float,3,1>((float[]){0,0, 4}), Matrix<float,3,1>((float[]){0,2,0})));
 
-    Texturer* wallsTexturer = new Texturer(texture);
-    SelectableRenderable* selectable = new SelectableRenderable(2); //2=walls
+    TexturerCompositeRenderable* wallsTexturer = new TexturerCompositeRenderable(texture);
+    SelectableCompositeRenderable* selectable = new SelectableCompositeRenderable(2); //2=walls
     GLuint name = 1;
     for (vector<Wall>::iterator it = walls.begin() ; it < walls.end() ; it++) {
         selectable->components.push_back(new WallRenderer(*it, name));

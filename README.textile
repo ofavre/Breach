@@ -7,6 +7,10 @@ Breach is an attempt to recreate the core experience of the game Portal from Val
 The experience uses some OpenGL techniques to achieve the visual experience of a _spacial breach_ in the world (a teleportation tunnel toward another place).
 Those techniques are described in the @RENDERING.textile@ file.
 
+h2. Compiling and running
+
+See @INSTALL.textile@ file.
+
 h2. Evolution
 
 h3. Eventual goal

@@ -11,12 +11,12 @@ DOC_DIR := doc
 
 # Tools configuration
 CXX := g++
-CXX_FLAGS := -c -Wall -Wextra -I$(INCLUDE_DIR)
+CXX_FLAGS := -c -Wall -Wextra -I$(INCLUDE_DIR) `pkg-config --cflags sigc++-2.0`
 CXX_FLAGS_RELEASE := -g1 -O2
 CXX_FLAGS_DEBUG := -g3 -O0
 LN := g++
 LN_FLAGS := 
-LN_LIBS := -lm `pkg-config --libs glu` -lglut `libpng-config --libs`
+LN_LIBS := -lm `pkg-config --libs glu` -lglut `libpng-config --libs` `pkg-config --libs sigc++-2.0`
 LN_FLAGS_RELEASE := -g3
 LN_FLAGS_DEBUG := -g3
 

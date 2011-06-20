@@ -21,6 +21,7 @@
 #include <GL/gl.h>
 
 #include "matrix.hpp"
+#include "visitor.hpp"
 
 
 
@@ -33,6 +34,9 @@
 
 
 
+// Forward declaration for IRenderable's friend declaration
+class LeafRenderable;
+class CompositeRenderable;
 /**
  * @brief Base class of all OpenGL-renderable object.
  *
@@ -51,7 +55,30 @@
  * implementation not to break functionnality.
  * The normal philosophy is to add modifications, not to replace them.
  */
-class IRenderable {
+class IRenderable : public Visitable<IRenderable> {
+    private:
+        friend class LeafRenderable;
+        friend class CompositeRenderable;
+        /** @brief Forbid direct non virtual inheritance of this class, use \link LeafRenderable \endlink or \link CompositeRenderable \endlink instead.
+         *
+         * The explicit name of this function is a hint of why the compiler is complaining.
+         *
+         * In order to preserve a clean hierarchy of renderables, only the few friends declared
+         * will be able (and have to) implement this dummy function that should to nothing and
+         * never be called.
+         *
+         * It has been made private for the sole purpose of design guidance:
+         *  - Deriving this class directly in (forcefully virtual) inheritance
+         *    should be used when the derived class provides partial functionnality,
+         *    such as implementing only configure/deconfigure or loadTransform/unloadTransform.
+         *    The fact that virtual inheritance is obliged is a good thing too, because
+         *    it makes no sense to force the utility deriving class to have its own mother class,
+         *    even if this base class has no state in itself.
+         *    (Multiple base class are used with multiple non-virtual inheritance of the same base class)
+         *  - Only LeafRenderable and CompositeRenderable can derive this class and implement
+         *    this function. So any non-abstract class should inherit one of those class.
+         */
+        virtual void PLEASE_USE_LeafRenderable_OR_CompositeRenderable_INSTEAD_OF_IRenderable_DIRECTLY() = 0;
     public:
         //! @brief Invokes successively all the steps for rendering the object.
         //! @param renderingMode The current value of glRenderMode().
@@ -96,10 +123,7 @@ class IRenderable {
  *        configuration and transformation.
  *
  * Many class will prefer deriving this class rather than \link IRenderable \endlink directly.
- *
- * Because many classes will override this class instead if \link IRenderable \endlink,
- * you can also override the \link render() \endlink function and forget about this class
- * being composite and code the rendering of a single object, whenever it suits your needs.
+ * However, if you object is not composed, prefer using \link LeafRenderable \endlink instead.
  *
  * Configuration and transformation are applied before
  * each render component is rendered (using \link IRenderable::fullRender() \endlink).
@@ -114,8 +138,13 @@ class IRenderable {
  * The vector of components is publicly accessible in order to facilitate
  * necessary manipulations, but you should remain thread-safe and avoid
  * modifying the vector while rendering.
+ *
+ * @see LeafRenderable
  */
-class CompositeRenderable : public IRenderable {
+class CompositeRenderable : public virtual IRenderable {
+    private:
+        //! @brief Implement the inheritance locking function of IRenderable base.
+        inline void PLEASE_USE_LeafRenderable_OR_CompositeRenderable_INSTEAD_OF_IRenderable_DIRECTLY() {}
     public:
         /** @brief List of the contained components.
          *
@@ -135,21 +164,57 @@ class CompositeRenderable : public IRenderable {
         /** @brief Renders successively all the components, in order.
          *
          * Calls \link IRenderable::fullRender() \endlink on each component.
+         * @param renderingMode The current value of glRenderMode().
          */
         virtual void render(GLenum renderingMode);
+        //! @copydoc Visitable::accept()
+        virtual bool accept(HierarchicalVisitor<IRenderable>& visitor);
 };
 
 
 
 /**
- * @brief A variant of a (composite) renderable that forces
+ * @brief Defines a final object that knows what OpenGL primitives to call.
+ *
+ * Many class will prefer deriving this class rather than \link IRenderable \endlink directly.
+ * However, if you object is composed, prefer using \link ComposedRenderable \endlink instead.
+ *
+ * Configuration and transformation are applied before
+ * each render component is rendered (using \link IRenderable::fullRender() \endlink).
+ *
+ * Therefore this class is a good place to factor configuration such as
+ * texturing, materials, and transformations that apply to the whole
+ * components group globally, where the components may transform again
+ * in a relative manner the ones from the others, by example in order to
+ * create a composed body.
+ *
+ * @see CompositeRenderable
+ */
+class LeafRenderable : public virtual IRenderable {
+    private:
+        //! @brief Implement the inheritance locking function of IRenderable base.
+        inline void PLEASE_USE_LeafRenderable_OR_CompositeRenderable_INSTEAD_OF_IRenderable_DIRECTLY() {}
+    public:
+        //! @brief Creates an leaf renderable to be implemented.
+        LeafRenderable();
+        //! @brief Destructor.
+        virtual ~LeafRenderable();
+        virtual void render(GLenum renderingMode) = 0;
+        //! @copydoc Visitable::accept()
+        virtual bool accept(HierarchicalVisitor<IRenderable>& visitor);
+};
+
+
+
+/**
+ * @brief A variant of a renderable that forces
  *        redefinition of the \link configure() \endlink and
  *        \link deconfigure() \endlink functions.
  *
  * This class merely serves a semantic role and calls its base class's
  * functions for its non pure virtual members.
  */
-class ConfigurerRenderable : public CompositeRenderable {
+class ConfigurerRenderable : public virtual IRenderable {
     public:
         ConfigurerRenderable();
         virtual ~ConfigurerRenderable();
@@ -161,14 +226,14 @@ class ConfigurerRenderable : public CompositeRenderable {
 
 
 /**
- * @brief A variant of a (composite) renderable that forces
+ * @brief A variant of a renderable that forces
  *        redefinition of the \link loadTransform() \endlink and
  *        \link unloadTransform() \endlink functions.
  *
  * This class merely serves a semantic role and calls its base class's
  * functions for its non pure virtual members.
  */
-class TransformerRenderable : public CompositeRenderable {
+class TransformerRenderable : public virtual IRenderable {
     public:
         TransformerRenderable();
         virtual ~TransformerRenderable();
@@ -181,9 +246,6 @@ class TransformerRenderable : public CompositeRenderable {
 
 /**
  * @brief Pushes a name onto OpenGL name stack (for selection), and renders internal components.
- *
- * Some class may prefer deriving this class rather than \link CompositeRenderable \endlink directly,
- * in order to benefit from naming hierarchy.
  *
  * The \link configure() \endlink and \link deconfigure() \endlink merely pushes
  * and pops a name onto the name stack.
@@ -210,6 +272,30 @@ class SelectableRenderable : public ConfigurerRenderable {
         //! @brief Pops the configured name from the name stack.
         virtual void deconfigure(GLenum renderingMode);
 };
+
+/**
+ * @brief A selectable, composed renderable.
+ */
+class SelectableCompositeRenderable : public CompositeRenderable, public SelectableRenderable {
+    public:
+        SelectableCompositeRenderable(GLuint name)
+        : SelectableRenderable(name)
+        {}
+        virtual ~SelectableCompositeRenderable()
+        {}
+};
+/**
+ * @brief A selectable, leaf renderable.
+ */
+class SelectableLeafRenderable : public LeafRenderable, public SelectableRenderable {
+    public:
+        SelectableLeafRenderable(GLuint name)
+        : SelectableRenderable(name)
+        {}
+        virtual ~SelectableLeafRenderable()
+        {}
+};
+
 
 
 
@@ -375,7 +461,7 @@ class Texture {
 
 
 /**
- * @brief Configurer renderable that bind the given texture to the OpenGL context.
+ * @brief Configurer renderable that binds the given texture to the OpenGL context.
  *
  * @see glTexParameterf()
  */
@@ -390,10 +476,36 @@ class Texturer : public ConfigurerRenderable {
         //! @brief Destructor.
         virtual ~Texturer();
 
+        //! @brief Returns the used texture.
+        const Texture getTexture() const;
+
         //! @brief Binds the configured texture to the OpenGL context.
         virtual void configure(GLenum renderingMode);
         //! @brief Unbinds any texture from the OpenGL context.
         virtual void deconfigure(GLenum renderingMode);
+};
+
+/**
+ * @brief A texturer, composed renderable.
+ */
+class TexturerCompositeRenderable : public CompositeRenderable, public Texturer {
+    public:
+        TexturerCompositeRenderable(const Texture& texture)
+        : Texturer(texture)
+        {}
+        virtual ~TexturerCompositeRenderable()
+        {}
+};
+/**
+ * @brief A texturer, leaf renderable.
+ */
+class TexturerLeafRenderable : public LeafRenderable, public Texturer {
+    public:
+        TexturerLeafRenderable(const Texture& texture)
+        : Texturer(texture)
+        {}
+        virtual ~TexturerLeafRenderable()
+        {}
 };
 
 
@@ -446,7 +558,7 @@ struct Rect {
  * the rectangle vertices coordinates will evolve between 0 and 1,
  * except for Z which will stay 0.
  */
-class TesseledRectangle : public MatrixTransformerRenderable {
+class TesseledRectangle : public LeafRenderable, public MatrixTransformerRenderable {
     private:
         //! @brief Whether this rectangle may be seen from the two sides.
         bool doubleSided;
@@ -510,7 +622,7 @@ class TesseledRectangle : public MatrixTransformerRenderable {
  * the polygon vertices coordinates will evolve between -1 and +1,
  * except for Z which will stay 0.
  */
-class RegularPolygon : public MatrixTransformerRenderable {
+class RegularPolygon : public LeafRenderable, public MatrixTransformerRenderable {
     private:
         //! Number of sides of the polygon
         unsigned int sides;

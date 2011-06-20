@@ -103,10 +103,38 @@ void CompositeRenderable::render(GLenum renderingMode)
     }
 }
 
+bool CompositeRenderable::accept(HierarchicalVisitor<IRenderable>& visitor)
+{
+    if (visitor.visitEnter(this)) {
+        for (vector<IRenderable*>::iterator it = components.begin() ; it < components.end() ; ++it) {
+            if (!(*it)->accept(visitor)) break;
+        }
+        return visitor.visitLeave(this);
+    } else {
+        return false;
+    }
+}
+
+
+
+LeafRenderable::LeafRenderable()
+{
+}
+
+LeafRenderable::~LeafRenderable()
+{
+}
+
+bool LeafRenderable::accept(HierarchicalVisitor<IRenderable>& visitor)
+{
+    return visitor.visitLeaf(this);
+}
+
+
+
 
 
 ConfigurerRenderable::ConfigurerRenderable()
-: CompositeRenderable()
 {
 }
 
@@ -117,7 +145,6 @@ ConfigurerRenderable::~ConfigurerRenderable()
 
 
 TransformerRenderable::TransformerRenderable()
-: CompositeRenderable()
 {
 }
 
@@ -259,6 +286,11 @@ Texturer::Texturer(const Texture& texture)
 
 Texturer::~Texturer()
 {
+}
+
+const Texture Texturer::getTexture() const
+{
+    return texture;
 }
 
 void Texturer::configure(GLenum renderingMode)

@@ -1,0 +1,48 @@
+h1. Installation
+
+First compile, then run.
+There is no installation.
+
+Tested under Ubuntu 10.04.2 LTS
+
+h2. Compilation
+
+h3. Dependencies
+
+* @build-essential@
+* @freeglut3-dev@
+* @libpng12-dev@
+* @libsigc++-2.0-dev@
+
+Maybe a few others, but which I do not directly rely onto.
+
+h3. Steps
+
+<pre>
+make compile
+make doc      # only if you'd like to
+make all      # an alias for the two former
+</pre>
+
+h2. Debugging
+
+<pre>
+make compile-debug  # compile with debugging symbols
+make debug          # run the debuggable program
+make gdb            # run the program inside the debugger
+</pre>
+
+h2. Running
+
+h3. Dependencies
+
+Basically, alike compilation:
+* @freeglut3@
+* @libpng12-0@
+* @libsigc++-2.0-0c2a@
+
+h3. Steps
+
+<pre>
+make run
+</pre>

@@ -74,7 +74,7 @@ class Target {
  *
  * If the target is hit, nothing is rendered.
  */
-class TargetRenderer : public SelectableRenderable {
+class TargetRenderer : public LeafRenderable, public SelectableRenderable {
     protected:
         //! @brief The target to render
         Target& target;

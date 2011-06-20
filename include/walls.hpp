@@ -91,7 +91,7 @@ class Wall {
  * It should be manager in a parent \link CompositeRenderable \endlink,
  * in order to apply texturing only once, in a batch manner.
  */
-class WallRenderer : public SelectableRenderable {
+class WallRenderer : public LeafRenderable, public SelectableRenderable {
     protected:
         //! @brief Wall to render
         Wall& wall;

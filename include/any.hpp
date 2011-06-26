@@ -57,12 +57,12 @@ class Any {
         T& operator =(T& value);
 
         template <class T>
-        void set(T& value);
+        Any& set(T& value);
 
         template <class T>
         T* get();
 
-        inline void clear();
+        inline Any& clear();
 
         inline bool isSet();
 };

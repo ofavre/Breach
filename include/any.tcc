@@ -62,12 +62,13 @@ T& Any::operator =(T& value)
 }
 
 template <class T>
-void Any::set(T& value)
+Any& Any::set(T& value)
 {
     if (handle != NULL) {
         delete handle;
     }
     handle = new Handle<T>(value);
+    return *this;
 }
 
 template <class T>
@@ -83,12 +84,13 @@ T* Any::get()
     }
 }
 
-void Any::clear()
+Any& Any::clear()
 {
     if (handle != NULL) {
         delete handle;
         handle = NULL;
     }
+    return *this;
 }
 
 bool Any::isSet()

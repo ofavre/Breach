@@ -225,4 +225,6 @@ class SpecializedHierachicalVisitor : public HierarchicalVisitor<TBase> {
 
 
 
+#include "visitor.tcc"
+
 #endif /*_VISITOR_HPP*/

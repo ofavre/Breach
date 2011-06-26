@@ -68,7 +68,7 @@ Return DynamicCastArgFunctor<Return,TBase,TSpecialized>::run(TBase* arg)
         return callback(NULL);
     }
     TSpecialized* dyn_arg = dynamic_cast<TSpecialized*>(arg);
-    if (dyn_arg == NULL) throw bad_cast();
+    if (dyn_arg == NULL) throw std::bad_cast();
     return callback(dyn_arg);
 }
 
@@ -110,7 +110,7 @@ bool SpecializedHierachicalVisitor<TBase>::visit(CallbackMap& exactMap, Callback
             try {
                 // If dynamic_cast succeeds, then the callback is called, and we can return
                 return it->second(that);
-            } catch (bad_cast& ex) {
+            } catch (std::bad_cast& ex) {
                 // Continue searching for an accepting type
                 continue;
             }
@@ -127,7 +127,7 @@ bool SpecializedHierachicalVisitor<TBase>::visit(CallbackMap& exactMap, Callback
 }
 
 template <class TBase>
-SpecializedHierachicalVisitor<TBase>::SpecializedHierachicalVisitor(bool defaultReturnEnter = true, bool defaultReturnLeaf = true, bool defaultReturnLeave = true)
+SpecializedHierachicalVisitor<TBase>::SpecializedHierachicalVisitor(bool defaultReturnEnter, bool defaultReturnLeaf, bool defaultReturnLeave)
 : defaultReturnEnter(defaultReturnEnter)
 , defaultReturnLeaf(defaultReturnLeaf)
 , defaultReturnLeave(defaultReturnLeave)

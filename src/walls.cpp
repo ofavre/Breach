@@ -70,7 +70,7 @@ float Wall::getTextureScale()
 
 
 WallRenderer::WallRenderer(Wall& wall, GLuint name)
-: SelectableRenderable(name)
+: SelectableLeafRenderable(name)
 , wall(wall)
 , renderRenderable(wall.getCorner(), wall.getAxisA(), wall.getAxisB(), wall.getAxisA().norm()*wall.getTesselationScale(), wall.getAxisB().norm()*wall.getTesselationScale(), (Rect){0,0,wall.getAxisA().norm()*wall.getTextureScale(),wall.getAxisB().norm()*wall.getTextureScale()}, true)
 {

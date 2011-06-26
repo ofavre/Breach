@@ -1,5 +1,21 @@
+/**
+ * @file visitor.tcc
+ *
+ * @brief Generic visitor design pattern implementation.
+ *
+ * @section LICENSE
+ *
+ * Copyright (c) 2011 Olivier Favre
+ *
+ * This file is part of Breach.
+ *
+ * Licensed under the Simplified BSD License,
+ * for details please see LICENSE file or the website
+ * http://www.opensource.org/licenses/BSD-2-Clause
+ */
+
 #ifndef _VISITOR_HPP
-#error You should include matrix.hpp instead of this file directly
+#error You should include visitor.hpp instead of this file directly
 #endif
 
 #ifndef _VISITOR_TCC

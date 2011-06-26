@@ -36,6 +36,7 @@ using namespace std;
 #include "renderable.hpp"
 #include "targets.hpp"
 #include "walls.hpp"
+#include "selection.hpp"
 
 /*! \def MIN(a,b)
  * @brief A macro that returns the minimum of \a a and \a b.
@@ -486,14 +487,22 @@ void doSelection(int x, int y) {
 
         if (closestHit != NULL) {
             GLuint nameCount = *closestHit;
-            if (nameCount >= 2) {
-                closestHit += 3;
-                if (closestHit[0] == 1) {
-                    printf("Target %u hit!\n", closestHit[1]);
-                    targets[closestHit[1]-1].setHit();
-                }
+            closestHit += 3;
+
+            vector<GLuint> desiredName;
+            for (unsigned int i = 0 ; i < nameCount ; i++) {
+                desiredName.push_back(closestHit[i]);
             }
-            printf("\n");
+
+            SelectionVisitor<Target> targetSelectionResolver(desiredName);
+            targetsRenderer->accept(targetSelectionResolver);
+
+            if (targetSelectionResolver.isSelectedObjectFound()) {
+                Target* shotTarget = targetSelectionResolver.getSelectedObject();
+                printf("Found : %p at (%f, %f, %f)\n", shotTarget, shotTarget->getX(), shotTarget->getY(), shotTarget->getZ());
+                shotTarget->setHit();
+            } else
+                printf("Not target hit\n");
         }
     }
 }

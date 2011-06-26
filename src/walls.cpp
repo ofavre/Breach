@@ -70,7 +70,7 @@ float Wall::getTextureScale()
 
 
 WallRenderer::WallRenderer(Wall& wall, GLuint name)
-: SelectableLeafRenderable(name)
+: SelectableLeafRenderable(name, Any().set(wall))
 , wall(wall)
 , renderRenderable(wall.getCorner(), wall.getAxisA(), wall.getAxisB(), wall.getAxisA().norm()*wall.getTesselationScale(), wall.getAxisB().norm()*wall.getTesselationScale(), (Rect){0,0,wall.getAxisA().norm()*wall.getTextureScale(),wall.getAxisB().norm()*wall.getTextureScale()}, true)
 {
@@ -118,7 +118,7 @@ void initWalls(Texture texture)
     walls.push_back(Wall(Matrix<float,4,1>((float[]){ 1,-1,-2,1}), Matrix<float,3,1>((float[]){0,0, 4}), Matrix<float,3,1>((float[]){0,2,0})));
 
     TexturerCompositeRenderable* wallsTexturer = new TexturerCompositeRenderable(texture);
-    SelectableCompositeRenderable* selectable = new SelectableCompositeRenderable(2); //2=walls
+    SelectableCompositeRenderable* selectable = new SelectableCompositeRenderable(2, Any().clear()); //2=walls
     GLuint name = 1;
     for (vector<Wall>::iterator it = walls.begin() ; it < walls.end() ; it++) {
         selectable->components.push_back(new WallRenderer(*it, name));

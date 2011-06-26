@@ -49,8 +49,9 @@ void IRenderable::deconfigure(GLenum renderingMode)
 
 
 
-SelectableRenderable::SelectableRenderable(GLuint name)
+SelectableRenderable::SelectableRenderable(GLuint name, Any payload)
 : name(name)
+, payload(payload)
 {
 }
 
@@ -61,6 +62,11 @@ SelectableRenderable::~SelectableRenderable()
 GLuint SelectableRenderable::getName()
 {
     return name;
+}
+
+Any SelectableRenderable::getPayload()
+{
+    return payload;
 }
 
 void SelectableRenderable::configure(GLenum renderingMode)

@@ -22,6 +22,7 @@
 
 #include "matrix.hpp"
 #include "visitor.hpp"
+#include "any.hpp"
 
 
 
@@ -258,14 +259,18 @@ class SelectableRenderable : public ConfigurerRenderable {
     private:
         //! @brief The name to be pushed onto OpenGL name stack.
         GLuint name;
+        //! @brief The data object to be retreived through this selectable.
+        Any payload;
     public:
         //! @brief Creates a selectable composite renderable with the given name.
-        SelectableRenderable(GLuint name);
+        SelectableRenderable(GLuint name, Any payload);
         //! @brief Destructor.
         virtual ~SelectableRenderable();
 
         //! @brief Returns the name given in the constructor.
         GLuint getName();
+        //! @brief Returns the data object associated with the selectable.
+        Any getPayload();
 
         //! @brief Pushes the configured name onto the name stack.
         virtual void configure(GLenum renderingMode);
@@ -278,8 +283,8 @@ class SelectableRenderable : public ConfigurerRenderable {
  */
 class SelectableCompositeRenderable : public CompositeRenderable, public SelectableRenderable {
     public:
-        SelectableCompositeRenderable(GLuint name)
-        : SelectableRenderable(name)
+        SelectableCompositeRenderable(GLuint name, Any payload)
+        : SelectableRenderable(name, payload)
         {}
         virtual ~SelectableCompositeRenderable()
         {}
@@ -289,8 +294,8 @@ class SelectableCompositeRenderable : public CompositeRenderable, public Selecta
  */
 class SelectableLeafRenderable : public LeafRenderable, public SelectableRenderable {
     public:
-        SelectableLeafRenderable(GLuint name)
-        : SelectableRenderable(name)
+        SelectableLeafRenderable(GLuint name, Any payload)
+        : SelectableRenderable(name, payload)
         {}
         virtual ~SelectableLeafRenderable()
         {}

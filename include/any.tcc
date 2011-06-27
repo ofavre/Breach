@@ -41,7 +41,7 @@ Any::Any()
 {
 }
 
-Any::Any(Any& tocopy)
+Any::Any(const Any& tocopy)
 : handle(tocopy.handle == NULL ? NULL : tocopy.handle->copy())
 {
 }

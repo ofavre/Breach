@@ -50,7 +50,7 @@ class Any {
         AnyHandle* handle;
     public:
         inline Any();
-        inline Any(Any& tocopy);
+        inline Any(const Any& tocopy);
         inline ~Any();
 
         template <class T>

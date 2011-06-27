@@ -165,7 +165,7 @@ void initTargets(Texture texture)
     //     The topmost renderable should add a name hierarchy (ID_TARGETS/id_target_1, ...)
 
     TexturerCompositeRenderable* targetsTexturer = new TexturerCompositeRenderable(texture);
-    SelectableCompositeRenderable* selectable = new SelectableCompositeRenderable(1, Any().clear()); //1=targets
+    SelectableCompositeRenderable* selectable = new SelectableCompositeRenderable(1, Any()); //1=targets
     GLuint name = 1;
     for (vector<Target>::iterator it = targets.begin() ; it < targets.end() ; it++) {
         selectable->components.push_back(new TargetRenderer(*it, name));

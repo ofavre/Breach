@@ -430,7 +430,6 @@ void display() {
  */
 void doSelection(int x, int y) {
     GLuint buffer[512];
-    GLint hits;
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
@@ -451,59 +450,39 @@ void doSelection(int x, int y) {
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
-    hits = glRenderMode(GL_RENDER);
 
-    printf("%d hits ! (including walls...)\n", hits);
-    if (hits > 0) {
-        float leastdepth = -1;
-        GLuint *ptr = buffer;
-        GLuint *closestHit = NULL;
+    SelectionUtil selection = SelectionUtil::finishGlSelection();
+    vector<SelectionUtil::Hit> hits = selection.getHits();
 
-        for (int i = 0 ; i < hits ; i++) { /*  for each hit  */
-            GLuint nameCount = ptr[0];
-            GLfloat z1 = ptr[1] / (float)0x7fffffff;
-            GLfloat z2 = ptr[2] / (float)0x7fffffff;
-            printf (" number of names for hit = %u\n", nameCount);
-            printf("  z1 is %g", z1);
-            printf(" z2 is %g\n", z2);
-            if (closestHit == NULL || z1 < leastdepth) {
-                leastdepth = z1;
-                closestHit = ptr;
-            }
-            ptr += 3;
+    printf("%lu hits ! (including walls...)\n", hits.size());
+    if (!hits.empty()) {
+        for (vector<SelectionUtil::Hit>::iterator it = hits.begin() ; it < hits.end() ; ++it) {
+            SelectionUtil::Hit& hit = *it;
+            printf (" number of names for hit = %lu\n", hit.nameHierarchy.size());
+            printf("  z1 is %g", hit.zMin);
+            printf(" z2 is %g\n", hit.zMax);
             printf ("  the name is:");
-            for (unsigned int j = 0; j < nameCount; j++) {     /*  for each name */
-                GLuint name = ptr[j];
+            for (vector<GLuint>::iterator itn = hit.nameHierarchy.begin() ; itn < hit.nameHierarchy.end() ; ++itn) {
+                GLuint name = *itn;
                 printf (" %u", name);
-                if (j == 0 && name == 1) {
+                if (itn == hit.nameHierarchy.begin() && name == 1) {
                     printf("(targets)");
-                } else if (j == 0 && name == 2) {
+                } else if (itn == hit.nameHierarchy.begin() && name == 2) {
                     printf("(walls)");
                 }
             }
-            ptr += nameCount;
             printf ("\n");
         }
 
-        if (closestHit != NULL) {
-            GLuint nameCount = *closestHit;
-            closestHit += 3;
+        TypedSelectionVisitor<Target> targetSelectionResolver(hits[0].nameHierarchy);
+        targetsRenderer->accept(targetSelectionResolver);
 
-            vector<GLuint> desiredName;
-            for (unsigned int i = 0 ; i < nameCount ; i++) {
-                desiredName.push_back(closestHit[i]);
-            }
-
-            SelectionVisitor<Target> targetSelectionResolver(desiredName);
-            targetsRenderer->accept(targetSelectionResolver);
-
-            if (targetSelectionResolver.isSelectedObjectFound()) {
-                Target* shotTarget = targetSelectionResolver.getSelectedObject();
-                printf("Found : %p at (%f, %f, %f)\n", shotTarget, shotTarget->getX(), shotTarget->getY(), shotTarget->getZ());
-                shotTarget->setHit();
-            } else
-                printf("Not target hit\n");
-        }
+        if (targetSelectionResolver.isSelectedObjectFound()) {
+            Target* shotTarget = targetSelectionResolver.getSelectedObject();
+            printf("Found : %p at (%f, %f, %f)\n", shotTarget, shotTarget->getX(), shotTarget->getY(), shotTarget->getZ());
+            shotTarget->setHit();
+        } else
+            printf("Not target hit\n");
     }
 }
 

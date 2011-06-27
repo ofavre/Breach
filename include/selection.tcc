@@ -25,42 +25,40 @@
 
 #include <vector>
 
-#include "selection.hpp"
-
 
 
 template <class TDesired>
-SelectionVisitor<TDesired>::SelectionVisitor(std::vector<GLuint> desiredName)
+TypedSelectionVisitor<TDesired>::TypedSelectionVisitor(std::vector<GLuint> desiredName)
 : SpecializedHierachicalVisitor<IRenderable>(true, true, true)
 , found(false)
 , selectedObject(NULL)
 , desiredName(desiredName)
 , currentLevel(0)
 {
-    addSpecializationEnter((sigc::slot<bool,SelectableCompositeRenderable*>)sigc::mem_fun(this,&SelectionVisitor::visitSelectableEnter));
-    addSpecializationLeaf((sigc::slot<bool,SelectableLeafRenderable*>)sigc::mem_fun(this,&SelectionVisitor::visitSelectableLeaf));
-    addSpecializationLeave((sigc::slot<bool,SelectableCompositeRenderable*>)sigc::mem_fun(this,&SelectionVisitor::visitSelectableLeave));
+    addSpecializationEnter((sigc::slot<bool,SelectableCompositeRenderable*>)sigc::mem_fun(this,&TypedSelectionVisitor::visitSelectableEnter));
+    addSpecializationLeaf((sigc::slot<bool,SelectableLeafRenderable*>)sigc::mem_fun(this,&TypedSelectionVisitor::visitSelectableLeaf));
+    addSpecializationLeave((sigc::slot<bool,SelectableCompositeRenderable*>)sigc::mem_fun(this,&TypedSelectionVisitor::visitSelectableLeave));
 }
 
 template <class TDesired>
-SelectionVisitor<TDesired>::~SelectionVisitor()
+TypedSelectionVisitor<TDesired>::~TypedSelectionVisitor()
 {
 }
 
 template <class TDesired>
-bool SelectionVisitor<TDesired>::isSelectedObjectFound()
+bool TypedSelectionVisitor<TDesired>::isSelectedObjectFound()
 {
     return found;
 }
 
 template <class TDesired>
-TDesired* SelectionVisitor<TDesired>::getSelectedObject()
+TDesired* TypedSelectionVisitor<TDesired>::getSelectedObject()
 {
     return selectedObject;
 }
 
 template <class TDesired>
-bool SelectionVisitor<TDesired>::visitSelectableEnter(SelectableCompositeRenderable* that)
+bool TypedSelectionVisitor<TDesired>::visitSelectableEnter(SelectableCompositeRenderable* that)
 {
     if (that == NULL) return false;
     if (that->getName() == desiredName[currentLevel]) {
@@ -71,6 +69,7 @@ bool SelectionVisitor<TDesired>::visitSelectableEnter(SelectableCompositeRendera
             TDesired* data = that->getPayload().get<TDesired>();
             if (data != NULL) {
                 found = true;
+                selectedObject = data;
             }
             return false;
         }
@@ -80,7 +79,7 @@ bool SelectionVisitor<TDesired>::visitSelectableEnter(SelectableCompositeRendera
 }
 
 template <class TDesired>
-bool SelectionVisitor<TDesired>::visitSelectableLeaf(SelectableLeafRenderable* that)
+bool TypedSelectionVisitor<TDesired>::visitSelectableLeaf(SelectableLeafRenderable* that)
 {
     if (that == NULL) return false;
     if (that->getName() == desiredName[currentLevel]) {
@@ -101,7 +100,7 @@ bool SelectionVisitor<TDesired>::visitSelectableLeaf(SelectableLeafRenderable* t
 }
 
 template <class TDesired>
-bool SelectionVisitor<TDesired>::visitSelectableLeave(SelectableCompositeRenderable* that)
+bool TypedSelectionVisitor<TDesired>::visitSelectableLeave(SelectableCompositeRenderable* that)
 {
     return !found;
 }

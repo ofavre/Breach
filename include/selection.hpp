@@ -26,8 +26,59 @@
 
 
 
-template <class TDesired>
+class SelectionUtil {
+    public:
+        struct Hit {
+            float zMin;
+            float zMax;
+            std::vector<GLuint> nameHierarchy;
+            bool operator<(const Hit& other) const;
+        };
+
+    private:
+        std::vector<Hit> hits;
+
+    protected:
+        void analyzeSelectionBuffer(GLint resultCount, GLuint* selectionBuffer);
+
+    public:
+        static SelectionUtil finishGlSelection();
+        SelectionUtil(GLint resultCount);
+        SelectionUtil(GLint resultCount, GLuint* selectionBuffer);
+        virtual ~SelectionUtil();
+
+        std::vector<Hit>& getHits();
+
+        Any getTopMostPayload(IRenderable& sceneRenderable);
+        template <class TDesired>
+        TDesired* getTopMostTypedPayload(IRenderable& sceneRenderable);
+};
+
+
+
 class SelectionVisitor : public SpecializedHierachicalVisitor<IRenderable> {
+    private:
+        bool found;
+        Any selectedObject;
+        std::vector<GLuint> desiredName;
+        unsigned int currentLevel;
+
+        virtual bool visitSelectableEnter(SelectableCompositeRenderable* that);
+        virtual bool visitSelectableLeaf(SelectableLeafRenderable* that);
+        virtual bool visitSelectableLeave(SelectableCompositeRenderable* that);
+
+    public:
+        SelectionVisitor(std::vector<GLuint> desiredName);
+        virtual ~SelectionVisitor();
+
+        bool isSelectedObjectFound();
+        Any getSelectedObject();
+};
+
+
+
+template <class TDesired>
+class TypedSelectionVisitor : public SpecializedHierachicalVisitor<IRenderable> {
     private:
         bool found;
         TDesired* selectedObject;
@@ -39,8 +90,8 @@ class SelectionVisitor : public SpecializedHierachicalVisitor<IRenderable> {
         virtual bool visitSelectableLeave(SelectableCompositeRenderable* that);
 
     public:
-        SelectionVisitor(std::vector<GLuint> desiredName);
-        virtual ~SelectionVisitor();
+        TypedSelectionVisitor(std::vector<GLuint> desiredName);
+        virtual ~TypedSelectionVisitor();
 
         bool isSelectedObjectFound();
         TDesired* getSelectedObject();

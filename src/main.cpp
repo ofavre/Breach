@@ -623,8 +623,11 @@ void reshape(int w, int h) {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-    // Initialisation sugar, optionnal
-    glutInitContextVersion(3, 2); // 3.2 is the maximum value still avoiding Compiz blinking
+    // Initialisation sugar, optional
+    // Disactivated because:
+    //  1) It activates no used feature
+    //  2) It breaks compatibility with legacy and poor opensource GPU drivers
+    //glutInitContextVersion(3, 2); // 3.2 is the maximum value still avoiding Compiz blinking
     //glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     //glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
     //glutInitContextFlags(GLUT_DEBUG);

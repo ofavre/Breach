@@ -10,6 +10,7 @@ h2. Compilation
 h3. Dependencies
 
 * @build-essential@
+* @pkg-config*
 * @freeglut3-dev@
 * @libpng12-dev@
 * @libsigc++-2.0-dev@

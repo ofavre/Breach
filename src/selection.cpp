@@ -23,16 +23,14 @@ using namespace std;
 
 
 
-SelectionUtil SelectionUtil::finishGlSelection()
+SelectionUtil SelectionUtil::finishGlSelection(GLuint* selectionBuffer)
 {
-    return SelectionUtil(glRenderMode(GL_RENDER));
+    return SelectionUtil(glRenderMode(GL_RENDER), selectionBuffer);
 }
 
-SelectionUtil::SelectionUtil(GLint resultCount)
+SelectionUtil::SelectionUtil(const SelectionUtil& copy)
+: hits(copy.hits)
 {
-    GLuint* selectionBuffer = NULL;
-    glGetPointerv(GL_SELECTION_BUFFER_POINTER, reinterpret_cast<void**>(&selectionBuffer));
-    analyzeSelectionBuffer(resultCount, selectionBuffer);
 }
 
 SelectionUtil::SelectionUtil(GLint resultCount, GLuint* selectionBuffer)

@@ -42,8 +42,8 @@ class SelectionUtil {
         void analyzeSelectionBuffer(GLint resultCount, GLuint* selectionBuffer);
 
     public:
-        static SelectionUtil finishGlSelection();
-        SelectionUtil(GLint resultCount);
+        static SelectionUtil finishGlSelection(GLuint* selectionBuffer);
+        SelectionUtil(const SelectionUtil& copy);
         SelectionUtil(GLint resultCount, GLuint* selectionBuffer);
         virtual ~SelectionUtil();
 

@@ -313,10 +313,7 @@ void draw_scene(bool forSelection = false) {
  *                     using names, or for normal rendering using colors.
  */
 void doDisplay(bool forSelection = false) {
-    // Move player
-    if (playerAdvance[0] != 0 || playerAdvance[1] != 0 || playerAdvance[2] != 0) {
-        playerPosition = playerPosition + (playerLookAt*playerAdvance[0] - playerInclinaison*playerLookAt*playerAdvance[1] + playerInclinaison*playerAdvance[2]) * playerSpeed;
-    }
+
     // Compute the absolute look-at point
     float playerLookAtReal[3];
     for (int i = 0 ; i < 3 ; i++) playerLookAtReal[i] = playerPosition(i,0) + playerLookAt(i,0);
@@ -362,34 +359,6 @@ void doDisplay(bool forSelection = false) {
     glEnable(GL_CULL_FACE);
 
     draw_scene(forSelection);
-
-    if (!forSelection) {
-        // 2D Overlay
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        gluOrtho2D(0, windowWidth, 0, windowHeight);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_LIGHTING);
-        glEnable(GL_COLOR_LOGIC_OP);
-        glLogicOp(GL_INVERT);
-        glRasterPos2d(windowWidth-60, windowHeight-20);
-        char fps_str[10];
-        sprintf(fps_str, "%d FPS", last_fps);
-        for (char* i = fps_str; *i != '\0'; i++) {
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *i);
-        }
-        glDisable(GL_COLOR_LOGIC_OP);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-
-        //glFlush(); // for GLUT_SINGLE buffer
-        glutSwapBuffers(); // for GLUT_DOUBLE buffer
-    }
 }
 
 /**
@@ -398,7 +367,38 @@ void doDisplay(bool forSelection = false) {
 void display() {
     static timeval lastcall = {0,0};
 
+    // Move player
+    if (playerAdvance[0] != 0 || playerAdvance[1] != 0 || playerAdvance[2] != 0) {
+        playerPosition = playerPosition + (playerLookAt*playerAdvance[0] - playerInclinaison*playerLookAt*playerAdvance[1] + playerInclinaison*playerAdvance[2]) * playerSpeed;
+    }
+
     doDisplay(false);
+
+    // 2D Overlay
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, windowWidth, 0, windowHeight);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_COLOR_LOGIC_OP);
+    glLogicOp(GL_INVERT);
+    glRasterPos2d(windowWidth-60, windowHeight-20);
+    char fps_str[10];
+    sprintf(fps_str, "%d FPS", last_fps);
+    for (char* i = fps_str; *i != '\0'; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *i);
+    }
+    glDisable(GL_COLOR_LOGIC_OP);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    //glFlush(); // for GLUT_SINGLE buffer
+    glutSwapBuffers(); // for GLUT_DOUBLE buffer
 
     // Attempt to respect a maximum frame rate
     timeval thiscall;
@@ -429,11 +429,12 @@ void display() {
  * @param y Ordinate of the clicked pixel
  */
 void doSelection(int x, int y) {
-    GLuint buffer[512];
+#define SELECTION_BUFFER_SIZE 512
+    GLuint buffer[SELECTION_BUFFER_SIZE];
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
-    glSelectBuffer(sizeof(buffer)/sizeof(*buffer), buffer);
+    glSelectBuffer(SELECTION_BUFFER_SIZE, buffer);
     glRenderMode(GL_SELECT);
     glInitNames();
 
@@ -451,7 +452,7 @@ void doSelection(int x, int y) {
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
 
-    SelectionUtil selection = SelectionUtil::finishGlSelection();
+    SelectionUtil selection = SelectionUtil::finishGlSelection(buffer);
     vector<SelectionUtil::Hit> hits = selection.getHits();
 
     printf("%lu hits ! (including walls...)\n", hits.size());

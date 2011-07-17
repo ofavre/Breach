@@ -110,6 +110,7 @@ SelectionVisitor::SelectionVisitor(std::vector<GLuint> desiredName)
 , desiredName(desiredName)
 , currentLevel(0)
 {
+    // TODO Test using SelectableRenderable directly (otherwise unseen, if the class is a SOMETHING_ELSE_Renderable inheriting from it)
     addSpecializationEnter((sigc::slot<bool,SelectableCompositeRenderable*>)sigc::mem_fun(this,&SelectionVisitor::visitSelectableEnter));
     addSpecializationLeaf((sigc::slot<bool,SelectableLeafRenderable*>)sigc::mem_fun(this,&SelectionVisitor::visitSelectableLeaf));
     addSpecializationLeave((sigc::slot<bool,SelectableCompositeRenderable*>)sigc::mem_fun(this,&SelectionVisitor::visitSelectableLeave));

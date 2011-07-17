@@ -67,6 +67,34 @@ float Wall::getTextureScale() const
     return textureScale;
 }
 
+Matrix<float,4,1> Wall::projectOnto(Matrix<float,4,1> point) const
+{
+    Matrix<float,4,1> pt = point - corner;
+    Matrix<float,1,4> ptT (pt.values);
+    float aNorm = axisA.norm();
+    float bNorm = axisB.norm();
+    Matrix<float,4,1> axisA4 ((float[]){axisA[0], axisA[1], axisA[2], 1});
+    Matrix<float,4,1> axisB4 ((float[]){axisB[0], axisB[1], axisB[2], 1});
+    float a = (ptT * axisA4/aNorm/aNorm)[0];
+    float b = (ptT * axisB4/bNorm/bNorm)[0];
+    Matrix<float,4,1> rtn = corner + axisA4 * a + axisB4 * b;
+    return rtn;
+}
+
+Matrix<float,2,1> Wall::inWallCoordinates(Matrix<float,4,1> point) const
+{
+    Matrix<float,4,1> pt = point - corner;
+    Matrix<float,1,4> ptT (pt.values);
+    float aNorm = axisA.norm();
+    float bNorm = axisB.norm();
+    Matrix<float,4,1> axisA4 ((float[]){axisA[0], axisA[1], axisA[2], 1});
+    Matrix<float,4,1> axisB4 ((float[]){axisB[0], axisB[1], axisB[2], 1});
+    float a = (ptT * axisA4/aNorm/aNorm)[0];
+    float b = (ptT * axisB4/bNorm/bNorm)[0];
+    Matrix<float,2,1> rtn ((float[]){a,b});
+    return rtn;
+}
+
 
 
 WallRenderer::WallRenderer(Wall& wall, GLuint name)

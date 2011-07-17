@@ -36,6 +36,7 @@ using namespace std;
 #include "renderable.hpp"
 #include "targets.hpp"
 #include "walls.hpp"
+#include "breaches.hpp"
 #include "selection.hpp"
 
 /*! \def MIN(a,b)
@@ -108,30 +109,6 @@ Matrix<float,4,1> playerInclinaison ((float[4]){0, 1, 0, 1});
  */
 int playerAdvance[3] = {0, 0, 0};
 
-//! @brief Default breach width
-const float BREACH_WIDTH = 0.4;
-//! @brief Default breach height
-const float BREACH_HEIGHT = 0.4;
-/** @brief Defines a breach.
- */
-struct Breach {
-    //! @brief A breach can be either opened or closed (not yet shot)
-    bool opened;
-    /**
-     * @brief The transformation matrix to apply to translate, orient and scale the breach.
-     *
-     * After applying this transformation,
-     * the breach must be rendered as a (possibly tesseled) quad,
-     * using -1/+1 for X and Y, and 0 for Z.
-     */
-    Matrix<float,4,4> transformation;
-};
-//! @brief The defined breaches
-Breach breaches[2] = {
-    { true,  Matrix<float,4,4>((float[]){BREACH_WIDTH,0,0,0, 0,BREACH_HEIGHT,0,0, 0,0,1,0, -.5,.5,-2,1}) },
-    { false, Matrix<float,4,4>() }
-};
-
 
 
 /**
@@ -143,7 +120,7 @@ Breach breaches[2] = {
 void draw_scene(bool forSelection = false) {
     if (!forSelection) {
 
-        if (breaches[0].opened) {
+        if (breaches[0].isOpened()) {
 
             // Test fake far scene (simply draw a target behind the wall)
             GLfloat mat_ambiant[] = { 1, 1, 1, 1 };
@@ -182,7 +159,7 @@ void draw_scene(bool forSelection = false) {
     glClear(GL_COLOR_BUFFER_BIT);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     if (!forSelection) {
-        if (breaches[0].opened) {
+        if (breaches[0].isOpened()) {
             // Draw breach in alpha only
             glClear(GL_DEPTH_BUFFER_BIT);
             glEnable(GL_TEXTURE_2D);
@@ -192,7 +169,7 @@ void draw_scene(bool forSelection = false) {
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
-            glMultMatrixf(breaches[0].transformation.values);
+            glMultMatrixf(breaches[0].getTransformation().values);
             glBegin(GL_QUADS);
             glTexCoord2f(0,0);
             glVertex3f(-1, -1, 0);
@@ -242,67 +219,7 @@ void draw_scene(bool forSelection = false) {
 
     targetsRenderer->fullRender(forSelection ? GL_SELECT : GL_RENDER);
 
-    if (!forSelection) {
-        if (breaches[0].opened) {
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-            // Draw the outline of the hidden breach
-            GLfloat mat_ambiant[] = { 10, 5, 0, 1 };
-            GLfloat mat_diffuse[] = { 10, 5, 0, 1 };
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambiant);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
-            glNormal3f(0, 0, 1);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, breachhidden_texture);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glMultMatrixf(breaches[0].transformation.values);
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glPolygonOffset(0, -10);
-
-            // Appear on top of occulting objects
-            glDisable(GL_CULL_FACE);
-            glDepthFunc(GL_GREATER);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0,0);
-            glVertex3f(-1, -1, 0);
-            glTexCoord2f(1,0);
-            glVertex3f( 1, -1, 0);
-            glTexCoord2f(1,1);
-            glVertex3f( 1,  1, 0);
-            glTexCoord2f(0,1);
-            glVertex3f(-1,  1, 0);
-            glEnd();
-
-            // Appear directly onto the porting wall (only when seen from the cull face)
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_FRONT);
-            glDepthFunc(GL_LESS);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0,0);
-            glVertex3f(-1, -1, 0);
-            glTexCoord2f(1,0);
-            glVertex3f( 1, -1, 0);
-            glTexCoord2f(1,1);
-            glVertex3f( 1,  1, 0);
-            glTexCoord2f(0,1);
-            glVertex3f(-1,  1, 0);
-            glEnd();
-            glCullFace(GL_BACK);
-            glDepthFunc(GL_LESS);
-
-            glPolygonOffset(0, 0);
-            glDisable(GL_POLYGON_OFFSET_FILL);
-            glPopMatrix();
-            glDisable(GL_BLEND);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glDisable(GL_TEXTURE_2D);
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        }
-    }
+    breachesRenderer->fullRender(forSelection ? GL_SELECT : GL_RENDER);
 
 }
 
@@ -434,15 +351,26 @@ void doSelection(int x, int y) {
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
+    y = viewport[3] - y;
+
+    GLfloat depth;
+    glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+
     glSelectBuffer(SELECTION_BUFFER_SIZE, buffer);
     glRenderMode(GL_SELECT);
     glInitNames();
+
+    GLdouble modelMatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+    GLdouble projectionMatrix[16];
+    GLdouble objX, objY, objZ;
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
+    glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
     // Zoom on the very pixel the mouse is onto
-    gluPickMatrix((GLdouble) x, (GLdouble) (viewport[3] - y), 1.0f, 1.0f, viewport);
+    gluPickMatrix((GLdouble) x, (GLdouble) y, 1.0f, 1.0f, viewport);
     gluPerspective(45.0f, (GLfloat) (viewport[2]-viewport[0])/(GLfloat) (viewport[3]-viewport[1]), 0.01f, 10.0f);
 
     // Render the scene for selection
@@ -462,6 +390,14 @@ void doSelection(int x, int y) {
             printf (" number of names for hit = %lu\n", hit.nameHierarchy.size());
             printf("  z1 is %g", hit.zMin);
             printf(" z2 is %g\n", hit.zMax);
+
+            if (gluUnProject(x, y, depth, modelMatrix, projectionMatrix, viewport, &objX, &objY, &objZ) == GL_TRUE) {
+                printf("  unprojection:\n");
+                printf("   ( %f ; %f ; %f )\n", objX, objY, objZ);
+            } else {
+                printf("  cannot unproject!\n");
+            }
+
             printf ("  the name is:");
             for (vector<GLuint>::iterator itn = hit.nameHierarchy.begin() ; itn < hit.nameHierarchy.end() ; ++itn) {
                 GLuint name = *itn;
@@ -482,8 +418,24 @@ void doSelection(int x, int y) {
             Target* shotTarget = targetSelectionResolver.getSelectedObject();
             printf("Found : %p at (%f, %f, %f)\n", shotTarget, shotTarget->getX(), shotTarget->getY(), shotTarget->getZ());
             shotTarget->setHit();
-        } else
-            printf("Not target hit\n");
+        } else {
+            printf("No target hit\n");
+
+            // Test for walls
+            TypedSelectionVisitor<Wall> wallSelectionResolver(hits[0].nameHierarchy);
+            wallsRenderer->accept(wallSelectionResolver);
+
+            if (wallSelectionResolver.isSelectedObjectFound()) {
+                Wall* shotWall = wallSelectionResolver.getSelectedObject();
+                printf("Found : %p\n", shotWall);
+                Matrix<float,4,1> obj = Matrix<float,4,1>((float[]){objX, objY, objZ, 1});
+                Matrix<float,4,1> corrected = shotWall->projectOnto(obj);
+                Matrix<float,2,1> wallC = shotWall->inWallCoordinates(obj);
+                printf("  shotPosition = (%f, %f, %f)\n", corrected[0], corrected[1], corrected[2]);
+                printf("  shotPosition = (%f, %f) in wall coordinates\n", wallC[0], wallC[1]);
+            } else
+                printf("No wall hit\n");
+        }
     }
 }
 
@@ -665,18 +617,12 @@ int main(int argc, char** argv) {
     PngImage* pi_breach = new PngImage();
     pi_breach->read_from_file("resources/breach-alpha.png");
     breach_texture = texs[2];
-    glBindTexture(GL_TEXTURE_2D, breach_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA8, pi_breach->getWidth(), pi_breach->getHeight(), 0, GL_ALPHA, GL_UNSIGNED_BYTE, pi_breach->getTexels());
+    Texture breachTexture (breach_texture, GL_ALPHA8, pi_breach->getWidth(), pi_breach->getHeight(), GL_ALPHA, pi_breach->getTexels());
     // Hidden breach outline
     PngImage* pi_breachhidden = new PngImage();
     pi_breachhidden->read_from_file("resources/breach-hidden.png");
     breachhidden_texture = texs[3];
-    glBindTexture(GL_TEXTURE_2D, breachhidden_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, pi_breachhidden->getWidth(), pi_breachhidden->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, pi_breachhidden->getTexels());
+    Texture breachHighlightTexture (breachhidden_texture, GL_RGBA8, pi_breachhidden->getWidth(), pi_breachhidden->getHeight(), GL_RGBA, pi_breachhidden->getTexels());
     // Free textures as they have been transferred to the GPU
     delete pi_target;
     pi_target = NULL;
@@ -689,6 +635,7 @@ int main(int argc, char** argv) {
 
     initTargets(targetTexture);
     initWalls(wallTexture);
+    initBreaches(breachTexture, breachHighlightTexture);
 
     // Let OpenGL control the program through its main loop
     glutMainLoop();

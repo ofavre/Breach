@@ -77,6 +77,16 @@ class Wall {
         float getTesselationScale() const;
         //! @brief Returns the world-space to texture-space scaling factor
         float getTextureScale() const;
+
+        //! @brief Returns the coordinates of the given point, projected against the wall.
+        Matrix<float,4,1> projectOnto(Matrix<float,4,1> point) const;
+        /** @brief Returns the coordinates of the given point, in the wall coordinate system.
+         *
+         * Use the returned coordinates with the ( \link getAxisA() \endlink ; \link getAxisB() \endlink )
+         * coordinate system, and add \link getCorner() \endlink to get the same result as
+         * \link projectOnto() \endlink.
+         */
+        Matrix<float,2,1> inWallCoordinates(Matrix<float,4,1> point) const;
 };
 
 
@@ -99,7 +109,7 @@ class WallRenderer : public SelectableLeafRenderable {
         TesseledRectangle renderRenderable;
 
     public:
-        //! @brief Constructs a wall rendered for the given wall with the given name.
+        //! @brief Constructs a wall renderer for the given wall with the given name.
         //! @param wall The wall to render
         //! @param name The name of the wall
         WallRenderer(Wall& wall, GLuint name);
@@ -110,7 +120,7 @@ class WallRenderer : public SelectableLeafRenderable {
         virtual void configure(GLenum renderingMode);
         //! @brief Renders the wall
         virtual void render(GLenum renderingMode);
-        //! @brief Deconfigure any changed OpenGL state.
+        //! @brief Deconfigures any changed OpenGL state.
         virtual void deconfigure(GLenum renderingMode);
 };
 

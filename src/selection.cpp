@@ -58,8 +58,8 @@ void SelectionUtil::analyzeSelectionBuffer(GLint resultCount, GLuint* selectionB
         for (int i = 0 ; i < resultCount ; i++) {
             Hit hit;
             GLuint nameCount = ptr[0];
-            GLfloat z1 = ptr[1] / (float)0x7fffffff;
-            GLfloat z2 = ptr[2] / (float)0x7fffffff;
+            GLfloat z1 = ptr[1] / (float)0xffffffff;
+            GLfloat z2 = ptr[2] / (float)0xffffffff;
             hit.zMin = z1;
             hit.zMax = z2;
             ptr += 3;

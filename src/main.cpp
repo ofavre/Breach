@@ -353,8 +353,13 @@ void doSelection(int x, int y) {
 
     y = viewport[3] - y;
 
-    GLfloat depth;
-    glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+    /* // Test depth buffer reading
+     * // Disabled because it does not use the selection rendering view
+     * // instead, we have the depth information in the selection buffer itself.
+     * GLfloat depth;
+     * glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+     * std::cout << "Depth = " << depth << std::endl;
+     */
 
     glSelectBuffer(SELECTION_BUFFER_SIZE, buffer);
     glRenderMode(GL_SELECT);
@@ -391,9 +396,15 @@ void doSelection(int x, int y) {
             printf("  z1 is %g", hit.zMin);
             printf(" z2 is %g\n", hit.zMax);
 
-            if (gluUnProject(x, y, depth, modelMatrix, projectionMatrix, viewport, &objX, &objY, &objZ) == GL_TRUE) {
+            GLdouble currObjX, currObjY, currObjZ;
+            if (gluUnProject(x, y, (hit.zMin+hit.zMax)/2.0f, modelMatrix, projectionMatrix, viewport, &currObjX, &currObjY, &currObjZ) == GL_TRUE) {
                 printf("  unprojection:\n");
-                printf("   ( %f ; %f ; %f )\n", objX, objY, objZ);
+                printf("   ( %f ; %f ; %f )\n", currObjX, currObjY, currObjZ);
+                if (it == hits.begin()) {
+                    objX = currObjX;
+                    objY = currObjY;
+                    objZ = currObjZ;
+                }
             } else {
                 printf("  cannot unproject!\n");
             }

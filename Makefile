@@ -11,7 +11,10 @@ DOC_DIR := doc
 
 # Tools configuration
 CXX := g++
-CXX_FLAGS := -c -Wall -Wextra -I$(INCLUDE_DIR) `pkg-config --cflags sigc++-2.0`
+CXX_FLAGS_COMPILATION := -c -Wall -Wextra
+CXX_FLAGS_INCLUDE_BREACH := -I$(INCLUDE_DIR)
+CXX_FLAGS_LIBS := `pkg-config --cflags sigc++-2.0`
+CXX_FLAGS := $(CXX_FLAGS_COMPILATION) $(CXX_FLAGS_INCLUDE_BREACH) $(CXX_FLAGS_LIBS)
 CXX_FLAGS_RELEASE := -g1 -O2
 CXX_FLAGS_DEBUG := -g3 -O0
 LN := g++
@@ -31,14 +34,22 @@ PROG_DEBUG := $(DIST_DIR)/$(PROG)$(PROG_EXT_DEBUG)$(PROG_EXT)
 PROG := $(DIST_DIR)/$(PROG)$(PROG_EXT)
 
 # List source file (and strip path)
-SRC := $(patsubst $(SRC_DIR)/%, %, $(wildcard $(SRC_DIR)/*.cpp))
+SRC_FN := $(patsubst $(SRC_DIR)/%, %, $(wildcard $(SRC_DIR)/*.cpp))
 # Derive object file names
-OBJ := $(patsubst %.cpp, %.$(OBJ_EXT), $(filter %.cpp,$(SRC)))
-OBJ_DEBUG := $(patsubst %.cpp, %.$(OBJ_EXT_DEBUG), $(filter %.cpp,$(SRC)))
+OBJ_FN := $(patsubst %.cpp, %.$(OBJ_EXT), $(filter %.cpp,$(SRC_FN)))
+OBJ_DEBUG_FN := $(patsubst %.cpp, %.$(OBJ_EXT_DEBUG), $(filter %.cpp,$(SRC_FN)))
 # Construct final file names by prepending the folder path
-SRC := $(addprefix $(SRC_DIR)/, $(SRC))
-OBJ := $(addprefix $(BUILD_DIR)/, $(OBJ))
-OBJ_DEBUG := $(addprefix $(BUILD_DIR)/, $(OBJ_DEBUG))
+SRC := $(addprefix $(SRC_DIR)/, $(SRC_FN))
+OBJ := $(addprefix $(BUILD_DIR)/, $(OBJ_FN))
+OBJ_DEBUG := $(addprefix $(BUILD_DIR)/, $(OBJ_DEBUG_FN))
+
+# Template defining header dependencies for a source file
+define TEMPLATE_SOURCE_HEADER_DEPENDENCIES
+# We have to strip the slashes and newlines, because they are taken for escaped spaces and count for a dependency!
+$(eval $(shell $(CXX) $(CXX_FLAGS_INCLUDE_BREACH) -MM $(SRC_DIR)/$(1).cpp -MT $(BUILD_DIR)/$(1).$(OBJ_EXT) -MT $(BUILD_DIR)/$(1).$(OBJ_EXT_DEBUG) | tr -d '\\\n'))
+endef
+# Each source file depends on its include dependencies
+$(foreach src_fn,$(patsubst %.cpp,%,$(SRC_FN)), $(eval $(call TEMPLATE_SOURCE_HEADER_DEPENDENCIES,$(src_fn))))
 
 # Same story with tests, plus define the programs file names
 # (from each single test source file will derive a single test program)
@@ -67,7 +78,7 @@ $(foreach test,$(TEST_PROG_DEBUG),$(eval $(call TEMPLATE_RUN_TEST,$(test))))
 
 # General make targets configuration
 .DEFAULT_GOAL = all
-.PHONY: all doc compile compile-debug compile-test compile-test-debug run debug gdb test test-debug clean distclean
+.PHONY: all doc compile compile-debug compile-test compile-test-debug run debug gdb test test-debug clean dist-clean
 .SECONDARY: $(OBJ) $(OBJ_DEBUG) $(TEST_OBJ) $(TEST_OBJ_DEBUG)
 
 
@@ -112,7 +123,7 @@ test-debug: compile-test-debug $(foreach test,$(TEST_PROG_DEBUG),RUN_TEST_$(test
 clean:
 	rm -f $(OBJ) $(OBJ_DEBUG) $(PROG) $(PROG_DEBUG) $(TEST_OBJ) $(TEST_OBJ_DEBUG) $(TEST_PROG) $(TEST_PROG_DEBUG)
 
-distclean: clean
+dist-clean: clean
 	rm -Rf $(DIST_DIR) $(BUILD_DIR) $(TEST_DIR)/$(DIST_DIR) $(TEST_DIR)/$(BUILD_DIR) $(DOC_DIR)
 	find -name '*~' -exec rm -f {} \;
 

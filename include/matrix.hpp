@@ -98,6 +98,20 @@ class Matrix {
         /**
          * @brief Calculates the L2 norm.
          *
+         * This function calculates the "full" norm (with all components),
+         * as opposed to \link norm() \endlink.
+         * It is more likely that the latter is more used, as many 4D vectors are manipulated,
+         * hence the names of the two functions.
+         *
+         * @return Returns the root sum of each cell's squared value, defining the L2 norm of a matrix/vector.
+         */
+        double normFull() const;
+        /**
+         * @brief Calculates the L2 norm, forgetting the last component.
+         *
+         * This is useful with 4D vectors when the last component is always 1,
+         * in order to be responsive to 4D matrices (with the translating component).
+         *
          * @return Returns the root sum of each cell's squared value, defining the L2 norm of a matrix/vector.
          */
         double norm() const;
@@ -210,28 +224,19 @@ namespace MatrixHelper {
      * @brief Generates a 4x4, 3D rotation matrix.
      *
      * @param angle Amount of rotation to be used.
-     * @param axis  Axis of the rotation, as a 3D vector.
-     * @return A 4x4 rotation matrix defined as
-     *         \f[
-                    \left(\begin{array}{cccc}
-                        x^2 \left( 1 - c \right) + c   &   xy  \left( 1 - c \right) - zs    &   xz  \left( 1 - c \right) + ys    &   0   \\
-                        xy  \left( 1 - c \right) + zs  &   y^2 \left( 1 - c \right) + c     &   yz  \left( 1 - c \right) - xs    &   0   \\
-                        xz  \left( 1 - c \right) - ys  &   yz  \left( 1 - c \right) + xs    &   z^2 \left( 1 - c \right) + c     &   0   \\
-                        0                              &   0                                &   0                                &   1
-                    \end{array}\right)
-                \f]
-     *          Where \f$ c = cos(\textnormal{angle}) \f$, \f$ s = sin(\textnormal{angle}) \f$ and \f$ \textnormal{axis} = \left( x , y , z \right) \f$.
-     *          The vector \a axis is normalized before use.
-     */
-    template <typename Value>
-    Matrix<Value,4,4> rotation(double angle, const Matrix<Value,3,1> &axis);
-    /**
-     * @brief Generates a 4x4, 3D rotation matrix.
-     *
-     * @param angle Amount of rotation to be used.
      * @param axis  Axis of the rotation, as a 4D vector.
      *              The last component should be equal to 1, and is ignored.
-     * @see MatrixHelper::rotation(double angle, const Matrix<Value,3,1> &axis)
+     * @return A 4x4 rotation matrix defined as
+     *         \f[
+     *                    \left(\begin{array}{cccc}
+     *                        x^2 \left( 1 - c \right) + c   &   xy  \left( 1 - c \right) - zs    &   xz  \left( 1 - c \right) + ys    &   0   \\
+     *                        xy  \left( 1 - c \right) + zs  &   y^2 \left( 1 - c \right) + c     &   yz  \left( 1 - c \right) - xs    &   0   \\
+     *                        xz  \left( 1 - c \right) - ys  &   yz  \left( 1 - c \right) + xs    &   z^2 \left( 1 - c \right) + c     &   0   \\
+     *                        0                              &   0                                &   0                                &   1
+     *                    \end{array}\right)
+     *                \f]
+     *          Where \f$ c = cos(\textnormal{angle}) \f$, \f$ s = sin(\textnormal{angle}) \f$ and \f$ \textnormal{axis} = \left( x , y , z \right) \f$.
+     *          The vector \a axis is normalized before use.
      */
     template <typename Value>
     Matrix<Value,4,4> rotation(double angle, const Matrix<Value,4,1> &axis);
@@ -253,14 +258,6 @@ namespace MatrixHelper {
      */
     template <typename Value>
     Matrix<Value,4,4> translation(Value x, Value y, Value z);
-    /**
-     * @brief Generates a 4x4, 3D translation matrix.
-     *
-     * @param vector 3D translation vector.
-     * @see MatrixHelper::translation(Value x, Value y, Value z)
-     */
-    template <typename Value>
-    Matrix<Value,4,4> translation(const Matrix<Value,3,1> &vector);
     /**
      * @brief Generates a 4x4, 3D translation matrix.
      *
@@ -288,14 +285,6 @@ namespace MatrixHelper {
      */
     template <typename Value>
     Matrix<Value,4,4> scaling(Value x, Value y, Value z);
-    /**
-     * @brief Generates a 4x4, 3D scaling matrix.
-     *
-     * @param vector 3D scaling vector.
-     * @see MatrixHelper::scaling(Value x, Value y, Value z)
-     */
-    template <typename Value>
-    Matrix<Value,4,4> scaling(const Matrix<Value,3,1> &vector);
     /**
      * @brief Generates a 4x4, 3D scaling matrix.
      *
@@ -338,12 +327,16 @@ namespace MatrixHelper {
     Matrix<Value,4,1> unitAxisVector(unsigned int axis);
 }
 
+
+
 /**
- * @brief Calculates the vectorial product of two 3D vectors.
+ * @brief Calculates the vectorial product of two 4D vectors.
+ *
+ * A 4D vector is like a 3D vector, with an additionnal fourth component equal to 1.
  *
  * @param u The first operand
  * @param v The second operand
- * @return A 3D vector defined as
+ * @return A 4D vector defined as
  *         \f[
                 \left(\begin{array}{c}
                     u_{1,0} v_{2,0}  -  u_{2,0} v_{1,0}   \\
@@ -351,17 +344,6 @@ namespace MatrixHelper {
                     u_{0,0} v_{1,0}  -  u_{1,0} v_{0,0}
                 \end{array}\right)
            \f]
- */
-template <typename Value>
-Matrix<Value,3,1> operator* (Matrix<Value,3,1> u, Matrix<Value,3,1> v);
-/**
- * @brief Calculates the vectorial product of two 4D vectors.
- *
- * The only difference with \link Matrix::operator*(Matrix<Value,3,1>,Matrix<Value,3,1>) \endlink
- * is that 4D vectors are used.
- * A 4D vector is like a 3D vector, with an additionnal fourth component equal to 1.
- *
- * @see Matrix::operator*(Matrix<Value,3,1>,Matrix<Value,3,1>)
  */
 template <typename Value>
 Matrix<Value,4,1> operator* (Matrix<Value,4,1> u, Matrix<Value,4,1> v);

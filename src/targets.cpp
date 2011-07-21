@@ -74,8 +74,8 @@ void Target::setHit()
 TargetRenderer::TargetRenderer(Target& target, GLuint name)
 : SelectableLeafRenderable(name, Any().set(target))
 , target(target)
-, renderRenderable(Matrix<float,4,1>((float[]){target.getX()-target.getSize()/2, target.getY()-target.getSize()/2, target.getZ(), 1}), MatrixHelper::unitRotationAxisVector<float>(0)*target.getSize(), MatrixHelper::unitRotationAxisVector<float>(1)*target.getSize(), 10, 10, (Rect){0,0,1,1}, true)
-, selectionRenderable(Matrix<float,4,1>((float[]){target.getX(), target.getY(), target.getZ(), 1}), MatrixHelper::unitRotationAxisVector<float>(0)*target.getSize()/2.045, MatrixHelper::unitRotationAxisVector<float>(1)*target.getSize()/2.045, 20)
+, renderRenderable(Matrix<float,4,1>((float[]){target.getX()-target.getSize()/2, target.getY()-target.getSize()/2, target.getZ(), 1}), MatrixHelper::unitAxisVector<float>(0)*target.getSize(), MatrixHelper::unitAxisVector<float>(1)*target.getSize(), 10, 10, (Rect){0,0,1,1}, true)
+, selectionRenderable(Matrix<float,4,1>((float[]){target.getX(), target.getY(), target.getZ(), 1}), MatrixHelper::unitAxisVector<float>(0)*target.getSize()/2.045, MatrixHelper::unitAxisVector<float>(1)*target.getSize()/2.045, 20)
 {
 }
 

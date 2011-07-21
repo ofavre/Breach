@@ -75,11 +75,6 @@ Matrix<Value,lines,cols>::~Matrix()
 template <typename Value>
 Matrix<Value,4,4> MatrixHelper::rotation(double angle, const Matrix<Value,4,1> &axis)
 {
-    return MatrixHelper::rotation<Value>(angle, Matrix<Value,3,1>(axis.values));
-}
-template <typename Value>
-Matrix<Value,4,4> MatrixHelper::rotation(double angle, const Matrix<Value,3,1> &axis)
-{
     /*
      *  / x²(1−c)+c  xy(1−c)−zs xz(1−c)+ys 0 \
      * |  yx(1−c)+zs y²(1−c)+c  yz(1−c)−xs 0  |
@@ -87,7 +82,8 @@ Matrix<Value,4,4> MatrixHelper::rotation(double angle, const Matrix<Value,3,1> &
      *  \     0          0          0      1 /
      * Where c=cos(angle), s=sin(angle), and (x,y,z) is normalized.
     */
-    Matrix<Value,3,1> normalizedAxis = axis / axis.norm();
+    Matrix<Value,4,1> normalizedAxis = axis / axis.norm();
+    normalizedAxis[3] = 1; // don't touch the last component
     Matrix<Value,4,4> rtn;
     rtn.fill(static_cast<Value>(1));
     for (unsigned int i = 0 ; i < 3 ; ++i) rtn(3,i) = rtn(i,3) = static_cast<Value>(0);
@@ -116,15 +112,10 @@ Matrix<Value,4,4> MatrixHelper::rotation(double angle, const Matrix<Value,3,1> &
 template <typename Value>
 Matrix<Value,4,4> MatrixHelper::translation(Value x, Value y, Value z)
 {
-    return MatrixHelper::translation<Value>(Matrix<Value,3,1>((Value[3]){x,y,z}));
+    return MatrixHelper::translation<Value>(Matrix<Value,4,1>((Value[4]){x,y,z,1}));
 }
 template <typename Value>
 Matrix<Value,4,4> MatrixHelper::translation(const Matrix<Value,4,1> &vector)
-{
-    return MatrixHelper::translation<Value>(Matrix<Value,3,1>(vector.values));
-}
-template <typename Value>
-Matrix<Value,4,4> MatrixHelper::translation(const Matrix<Value,3,1> &vector)
 {
     /*
      *  / 1 0 0 x \
@@ -132,8 +123,7 @@ Matrix<Value,4,4> MatrixHelper::translation(const Matrix<Value,3,1> &vector)
      * |  0 0 1 z  |
      *  \ 0 0 0 1 /
      */
-    Matrix<Value,4,4> rtn;
-    rtn.fill(static_cast<Value>(0));
+    Matrix<Value,4,4> rtn (static_cast<Value>(0));
     for (unsigned int i = 0 ; i < 3 ; ++i) {
         rtn(i,3) = vector(i,0);
         rtn(i,i) = static_cast<Value>(1);
@@ -144,15 +134,10 @@ Matrix<Value,4,4> MatrixHelper::translation(const Matrix<Value,3,1> &vector)
 template <typename Value>
 Matrix<Value,4,4> MatrixHelper::scaling(Value x, Value y, Value z)
 {
-    return MatrixHelper::scaling<Value>(Matrix<Value,3,1>((Value[3]){x,y,z}));
+    return MatrixHelper::scaling<Value>(Matrix<Value,4,1>((Value[4]){x,y,z,1}));
 }
 template <typename Value>
 Matrix<Value,4,4> MatrixHelper::scaling(const Matrix<Value,4,1> &vector)
-{
-    return MatrixHelper::scaling<Value>(Matrix<Value,3,1>(vector.values));
-}
-template <typename Value>
-Matrix<Value,4,4> MatrixHelper::scaling(const Matrix<Value,3,1> &vector)
 {
     /*
      *  / x 0 0 0 \
@@ -160,8 +145,7 @@ Matrix<Value,4,4> MatrixHelper::scaling(const Matrix<Value,3,1> &vector)
      * |  0 0 z 0  |
      *  \ 0 0 0 1 /
      */
-    Matrix<Value,4,4> rtn;
-    rtn.fill(static_cast<Value>(0));
+    Matrix<Value,4,4> rtn (static_cast<Value>(0));
     for (unsigned int i = 0 ; i < 3 ; ++i) {
         rtn(i,i) = vector(i,0);
     }
@@ -254,10 +238,21 @@ void Matrix<Value,lines,cols>::take(const Value values[cols*lines])
 }
 
 template <typename Value, unsigned int lines, unsigned int cols>
-double Matrix<Value,lines,cols>::norm() const
+double Matrix<Value,lines,cols>::normFull() const
 {
     double rtn = 0;
     for (unsigned int i = lines*cols-1 ; ; i--) {
+        rtn += values[i] * values[i];
+        if (i == 0) break;
+    }
+    return sqrt(rtn);
+}
+
+template <typename Value, unsigned int lines, unsigned int cols>
+double Matrix<Value,lines,cols>::norm() const
+{
+    double rtn = 0;
+    for (unsigned int i = lines*cols-1-1 ; ; i--) {
         rtn += values[i] * values[i];
         if (i == 0) break;
     }
@@ -383,11 +378,6 @@ Value& Matrix<Value,lines,cols>::operator[](unsigned int index)
 }
 
 
-template <typename Value>
-Matrix<Value,3,1> operator* (Matrix<Value,3,1> u, Matrix<Value,3,1> v)
-{
-    return Matrix<Value,3,1>((Value[3]){u(1,0)*v(2,0)-u(2,0)*v(1,0),u(2,0)*v(0,0)-u(0,0)*v(2,0),u(0,0)*v(1,0)-u(1,0)*v(0,0)});
-}
 
 template <typename Value>
 Matrix<Value,4,1> operator* (Matrix<Value,4,1> u, Matrix<Value,4,1> v)

@@ -29,7 +29,7 @@ IRenderable* wallsRenderer = NULL;
 
 
 
-Wall::Wall(Matrix<float,4,1> corner, Matrix<float,3,1> axisA, Matrix<float,3,1>axisB, float tesselationScale /*= STANDARD_TESSELATION_SCALE*/, float textureScale /*= STANDARD_TEXTURE_SCALE*/)
+Wall::Wall(Matrix<float,4,1> corner, Matrix<float,4,1> axisA, Matrix<float,4,1>axisB, float tesselationScale /*= STANDARD_TESSELATION_SCALE*/, float textureScale /*= STANDARD_TEXTURE_SCALE*/)
 : corner(corner)
 , axisA(axisA)
 , axisB(axisB)
@@ -47,12 +47,12 @@ Matrix<float,4,1> Wall::getCorner() const
     return corner;
 }
 
-Matrix<float,3,1> Wall::getAxisA() const
+Matrix<float,4,1> Wall::getAxisA() const
 {
     return axisA;
 }
 
-Matrix<float,3,1> Wall::getAxisB() const
+Matrix<float,4,1> Wall::getAxisB() const
 {
     return axisB;
 }
@@ -109,13 +109,13 @@ void WallRenderer::deconfigure(GLenum renderingMode)
 
 void initWalls(Texture texture)
 {
-    walls.push_back(Wall(Matrix<float,4,1>((float[]){ 1,-1, 2,1}), Matrix<float,3,1>((float[]){-2,0,0}), Matrix<float,3,1>((float[]){0,2,0})));
-    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1,-1,-2,1}), Matrix<float,3,1>((float[]){ 2,0,0}), Matrix<float,3,1>((float[]){0,2,0})));
+    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1,-1,-2,1}), Matrix<float,4,1>((float[]){ 2,0,0,1}), Matrix<float,4,1>((float[]){0,2,0,1})));
+    walls.push_back(Wall(Matrix<float,4,1>((float[]){ 1,-1, 2,1}), Matrix<float,4,1>((float[]){-2,0,0,1}), Matrix<float,4,1>((float[]){0,2,0,1})));
 
-    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1,-1,-2,1}), Matrix<float,3,1>((float[]){0,0, 4}), Matrix<float,3,1>((float[]){2,0,0})));
-    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1, 1, 2,1}), Matrix<float,3,1>((float[]){0,0,-4}), Matrix<float,3,1>((float[]){2,0,0})));
-    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1,-1, 2,1}), Matrix<float,3,1>((float[]){0,0,-4}), Matrix<float,3,1>((float[]){0,2,0})));
-    walls.push_back(Wall(Matrix<float,4,1>((float[]){ 1,-1,-2,1}), Matrix<float,3,1>((float[]){0,0, 4}), Matrix<float,3,1>((float[]){0,2,0})));
+    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1,-1,-2,1}), Matrix<float,4,1>((float[]){0,0, 4,1}), Matrix<float,4,1>((float[]){2,0,0,1})));
+    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1, 1, 2,1}), Matrix<float,4,1>((float[]){0,0,-4,1}), Matrix<float,4,1>((float[]){2,0,0,1})));
+    walls.push_back(Wall(Matrix<float,4,1>((float[]){-1,-1, 2,1}), Matrix<float,4,1>((float[]){0,0,-4,1}), Matrix<float,4,1>((float[]){0,2,0,1})));
+    walls.push_back(Wall(Matrix<float,4,1>((float[]){ 1,-1,-2,1}), Matrix<float,4,1>((float[]){0,0, 4,1}), Matrix<float,4,1>((float[]){0,2,0,1})));
 
     TexturerCompositeRenderable* wallsTexturer = new TexturerCompositeRenderable(texture);
     SelectableCompositeRenderable* selectable = new SelectableCompositeRenderable(2, Any()); //2=walls

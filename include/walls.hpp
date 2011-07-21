@@ -42,12 +42,12 @@ class Wall {
         //! @brief World-space position of the first corner
         Matrix<float,4,1> corner;
         //! @brief World-space translation vector from the first to the second corner
-        Matrix<float,3,1> axisA;
+        Matrix<float,4,1> axisA;
         /** @brief World-space translation vector from the first to the fourth corner.
          *
          * The third corner is calculated so that it defines a parallelogram.
          */
-        Matrix<float,3,1> axisB;
+        Matrix<float,4,1> axisB;
         //! @brief The world-space size to tessel count scaling factor.
         /// @see Wall::STANDARD_TESSELATION_SCALE
         float tesselationScale;
@@ -63,16 +63,16 @@ class Wall {
          * @param tesselationScale  The world-space size to tessel count scaling factor
          * @param textureScale      The world-space to texture-space scaling factor
          */
-        Wall(Matrix<float,4,1> corner, Matrix<float,3,1> axisA, Matrix<float,3,1>axisB, float tesselationScale = STANDARD_TESSELATION_SCALE, float textureScale = STANDARD_TEXTURE_SCALE);
+        Wall(Matrix<float,4,1> corner, Matrix<float,4,1> axisA, Matrix<float,4,1>axisB, float tesselationScale = STANDARD_TESSELATION_SCALE, float textureScale = STANDARD_TEXTURE_SCALE);
         //! @brief Destructor.
         virtual ~Wall();
 
         //! @brief Returns the world-space position of the first corner
         Matrix<float,4,1> getCorner() const;
         //! @brief Returns the world-space translation vector from the first to the second corner
-        Matrix<float,3,1> getAxisA() const;
+        Matrix<float,4,1> getAxisA() const;
         //! @brief Returns the world-space translation vector from the first to the fourth corner
-        Matrix<float,3,1> getAxisB() const;
+        Matrix<float,4,1> getAxisB() const;
         //! @brief Returns the world-space size to tessel count scaling factor
         float getTesselationScale() const;
         //! @brief Returns the world-space to texture-space scaling factor

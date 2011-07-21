@@ -172,7 +172,7 @@ MatrixTransformerRenderable::MatrixTransformerRenderable(Matrix<float,4,4>& tran
 {
 }
 
-MatrixTransformerRenderable::MatrixTransformerRenderable(Matrix<float,4,1> offset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY, MatrixMode matrixMode)
+MatrixTransformerRenderable::MatrixTransformerRenderable(Matrix<float,4,1> offset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY, MatrixMode matrixMode)
 : matrixMode(matrixMode)
 , transformation(computeTransformationMatrix(offset,axisX,axisY))
 {
@@ -182,9 +182,9 @@ MatrixTransformerRenderable::~MatrixTransformerRenderable()
 {
 }
 
-Matrix<float,4,4> MatrixTransformerRenderable::computeTransformationMatrix(Matrix<float,4,1> offset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY)
+Matrix<float,4,4> MatrixTransformerRenderable::computeTransformationMatrix(Matrix<float,4,1> offset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY)
 {
-    Matrix<float,3,1> axisZ = axisX * axisY;
+    Matrix<float,4,1> axisZ = axisX * axisY;
     axisZ = axisZ / axisZ.norm(); // important for the normals
     return Matrix<float,4,4>((float[]){axisX[0],axisX[1],axisX[2],0, axisY[0],axisY[1],axisY[2],0, axisZ[0],axisZ[1],axisZ[2],0, offset[0], offset[1], offset[2], 1});
 }
@@ -330,7 +330,7 @@ TesseledRectangle::TesseledRectangle(unsigned int xSteps, unsigned int ySteps, c
 {
 }
 
-TesseledRectangle::TesseledRectangle(Matrix<float,4,1> offset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY, unsigned int xSteps, unsigned int ySteps, const Rect textureOffsetAndSize, bool doubleSided)
+TesseledRectangle::TesseledRectangle(Matrix<float,4,1> offset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY, unsigned int xSteps, unsigned int ySteps, const Rect textureOffsetAndSize, bool doubleSided)
 : MatrixTransformerRenderable(offset, axisX, axisY)
 , doubleSided(doubleSided)
 , xSteps(xSteps)
@@ -403,7 +403,7 @@ RegularPolygon::RegularPolygon(unsigned int sides)
 {
 }
 
-RegularPolygon::RegularPolygon(Matrix<float,4,1> centerOffset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY, unsigned int sides)
+RegularPolygon::RegularPolygon(Matrix<float,4,1> centerOffset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY, unsigned int sides)
 : MatrixTransformerRenderable(MatrixTransformerRenderable::computeTransformationMatrix(centerOffset,axisX,axisY))
 , sides(sides)
 {

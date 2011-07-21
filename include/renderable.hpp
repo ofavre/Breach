@@ -343,7 +343,7 @@ class MatrixTransformerRenderable : public TransformerRenderable {
         //! @param axisY            New Y axis
         //! @param matrixMode       Specifies which OpenGL matrix mode to transform
         //! @see MatrixTransformerRenderable::computeTransformationMatrix()
-        MatrixTransformerRenderable(Matrix<float,4,1> offset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY, MatrixMode matrixMode = MODELVIEW);
+        MatrixTransformerRenderable(Matrix<float,4,1> offset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY, MatrixMode matrixMode = MODELVIEW);
         //! @brief Destructor.
         virtual ~MatrixTransformerRenderable();
 
@@ -373,7 +373,7 @@ class MatrixTransformerRenderable : public TransformerRenderable {
          * @param axisX     New X axis
          * @param axisY     New Y axis
          */
-        static Matrix<float,4,4> computeTransformationMatrix(Matrix<float,4,1> offset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY);
+        static Matrix<float,4,4> computeTransformationMatrix(Matrix<float,4,1> offset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY);
 
         //! @brief Returns the OpenGL matrix mode to transform.
         MatrixMode getMatrixMode();
@@ -603,7 +603,7 @@ class TesseledRectangle : public LeafRenderable, public MatrixTransformerRendera
          *                              Uses back face culling for proper hiding the hidden side.
          * @see MatrixTransformerRenderable::computeTransformationMatrix
          */
-        TesseledRectangle(Matrix<float,4,1> offset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY, unsigned int xSteps, unsigned int ySteps, const Rect textureOffsetAndSize, bool doubleSided = true);
+        TesseledRectangle(Matrix<float,4,1> offset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY, unsigned int xSteps, unsigned int ySteps, const Rect textureOffsetAndSize, bool doubleSided = true);
         //! @brief Destructor.
         virtual ~TesseledRectangle();
 
@@ -640,7 +640,7 @@ class RegularPolygon : public LeafRenderable, public MatrixTransformerRenderable
         //! @param axisX        New X axis.
         //! @param axisY        New Y axis.
         //! @param sides        Number of sides of the polygon
-        RegularPolygon(Matrix<float,4,1> centerOffset, Matrix<float,3,1> axisX, Matrix<float,3,1> axisY, unsigned int sides);
+        RegularPolygon(Matrix<float,4,1> centerOffset, Matrix<float,4,1> axisX, Matrix<float,4,1> axisY, unsigned int sides);
         //! @brief Destructor.
         virtual ~RegularPolygon();
 

@@ -42,27 +42,27 @@ Wall::~Wall()
 {
 }
 
-Matrix<float,4,1> Wall::getCorner()
+Matrix<float,4,1> Wall::getCorner() const
 {
     return corner;
 }
 
-Matrix<float,3,1> Wall::getAxisA()
+Matrix<float,3,1> Wall::getAxisA() const
 {
     return axisA;
 }
 
-Matrix<float,3,1> Wall::getAxisB()
+Matrix<float,3,1> Wall::getAxisB() const
 {
     return axisB;
 }
 
-float Wall::getTesselationScale()
+float Wall::getTesselationScale() const
 {
     return tesselationScale;
 }
 
-float Wall::getTextureScale()
+float Wall::getTextureScale() const
 {
     return textureScale;
 }

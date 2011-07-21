@@ -68,15 +68,15 @@ class Wall {
         virtual ~Wall();
 
         //! @brief Returns the world-space position of the first corner
-        Matrix<float,4,1> getCorner();
+        Matrix<float,4,1> getCorner() const;
         //! @brief Returns the world-space translation vector from the first to the second corner
-        Matrix<float,3,1> getAxisA();
+        Matrix<float,3,1> getAxisA() const;
         //! @brief Returns the world-space translation vector from the first to the fourth corner
-        Matrix<float,3,1> getAxisB();
+        Matrix<float,3,1> getAxisB() const;
         //! @brief Returns the world-space size to tessel count scaling factor
-        float getTesselationScale();
+        float getTesselationScale() const;
         //! @brief Returns the world-space to texture-space scaling factor
-        float getTextureScale();
+        float getTextureScale() const;
 };
 
 

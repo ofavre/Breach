@@ -19,6 +19,7 @@
 
 #include "matrix.hpp"
 #include "renderable.hpp"
+#include "walls.hpp"
 
 
 /**
@@ -34,6 +35,8 @@ class Breach {
     private:
         //! @brief A breach can be either opened or closed (and not yet shot)
         bool opened;
+        //! @brief The porting wall. Transformations are relative to it.
+        const Wall* wall;
         /**
         * @brief The transformation matrix to apply to translate, orient and scale the breach.
         *
@@ -43,8 +46,12 @@ class Breach {
         */
         Matrix<float,4,4> transformation;
 
+        static Matrix<float,2,1> getAdjustedShotPoint     (const Wall& wall, const Matrix<float,2,1> shotPoint);
+        static Matrix<float,4,4> getTransformationFromWall(const Wall& wall, const Matrix<float,2,1> shotPoint);
+
     public:
-        Breach(bool opened, Matrix<float,4,4> transformation);
+        Breach(bool opened, const Wall& wall, Matrix<float,2,1> shotPoint);
+        Breach(bool opened, const Wall& wall, Matrix<float,4,4> transformation);
         virtual ~Breach();
 
         Matrix<float,4,4> getTransformation() const;
@@ -73,6 +80,8 @@ class BreachRenderer : public SelectableLeafRenderable, public MatrixTransformer
         //! @brief Destructor.
         virtual ~BreachRenderer();
 
+        //! @brief Updates the transformation before applying it
+        virtual void loadTransform(GLenum renderingMode);
         //! @brief Renders the breach
         virtual void render(GLenum renderingMode);
 };

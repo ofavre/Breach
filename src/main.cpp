@@ -444,6 +444,8 @@ void doSelection(int x, int y) {
                 Matrix<float,2,1> wallC = shotWall->inWallCoordinates(obj);
                 printf("  shotPosition = (%f, %f, %f)\n", corrected[0], corrected[1], corrected[2]);
                 printf("  shotPosition = (%f, %f) in wall coordinates\n", wallC[0], wallC[1]);
+
+                breaches[0] = Breach(true, *shotWall, wallC);
             } else
                 printf("No wall hit\n");
         }

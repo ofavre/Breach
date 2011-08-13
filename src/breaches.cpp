@@ -20,6 +20,12 @@ using namespace std;
 
 
 
+// From main.cpp
+// TODO: Create a separate header for the player
+extern Matrix<float,4,1> playerInclinaison;
+
+
+
 std::vector<Breach> breaches;
 
 IRenderable* breachesRenderer;
@@ -51,9 +57,18 @@ Matrix<float,4,4> Breach::getTransformationFromWall(const Wall& wall, const Matr
     Matrix<float,4,1> z = a * b;
     z = z / z.norm();
     Matrix<float,4,1> t = c + a*shotPoint[0] + b*shotPoint[1];
-    a = a * (DEFAULT_BREACH_WIDTH /2 / a.norm());
-    b = b * (DEFAULT_BREACH_HEIGHT/2 / b.norm());
+    a = a / a.norm();
+    b = b / b.norm();
+    Matrix<float,1,4> upT (playerInclinaison.values);
+    upT = upT / upT.norm();
+    a(3,0) = b(3,0) = upT(0,3) = 0; // merely for the following vector product
+    float upA = (upT * a)[0];
+    float upB = (upT * b)[0];
+    a = a * (DEFAULT_BREACH_WIDTH /2);
+    b = b * (DEFAULT_BREACH_HEIGHT/2);
     Matrix<float,4,4> rtn ((float[]){a[0],a[1],a[2],0, b[0],b[1],b[2],0, z[0],z[1],z[2],0, t[0],t[1],t[2],1});
+    float upAngle = -atan2(upA,upB);
+    rtn = rtn * MatrixHelper::rotation(upAngle, MatrixHelper::unitAxisVector<float>(2));
     return rtn;
 }
 

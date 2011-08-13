@@ -65,6 +65,14 @@ GLuint wall_texture = -1;
 GLuint breach_texture = -1;
 //! @brief Texture id for outline of hidden breaches
 GLuint breachhidden_texture = -1;
+//! @brief Texture id for the crosshair
+GLuint crosshair_texture = -1;
+//! @brief Texture for the crosshair
+Texture crosshairTexture = Texture::NO_TEXTURE;
+//! @brief Width of the crosshair (its texture one)
+int crosshairWidth = -1;
+//! @brief Height of the crosshair (its texture one)
+int crosshairHeight = -1;
 
 // Windowing stuff
 //! @brief Scale used for passing to pixels to OpenGL unit
@@ -82,10 +90,8 @@ float height;
 bool mouseButtonPressed[3] = {false, false, false};
 //! @brief Last mouse button manipulated
 int lastMouseButton;
-//! @brief Last mouse known position
-int lastMouseX;
-//! @brief Last mouse known position
-int lastMouseY;
+//! @brief Is mouse captured, and should events be taken care of, or not.
+bool mouseCaptured = false;
 
 //! Player speed
 float playerSpeed = .01f;
@@ -301,6 +307,39 @@ void display() {
     gluOrtho2D(0, windowWidth, 0, windowHeight);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
+
+    // Crosshair
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, crosshairTexture.getName());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1,1,1,1);
+    float x = windowWidth/2;
+    float y = windowHeight/2;
+    glBegin(GL_QUADS);
+    x -= crosshairWidth/2;
+    y -= crosshairHeight/2;
+    glTexCoord2f(0,0);
+    glVertex2f(x,y);
+    x += crosshairWidth;
+    glTexCoord2f(1,0);
+    glVertex2f(x,y);
+    y += crosshairHeight;
+    glTexCoord2f(1,1);
+    glVertex2f(x,y);
+    x -= crosshairWidth;
+    glTexCoord2f(0,1);
+    glVertex2f(x,y);
+    glEnd();
+    glDisable(GL_BLEND);
+    glBindTexture(GL_TEXTURE_2D, Texture::NO_TEXTURE.getName());
+    glDisable(GL_TEXTURE_2D);
+
+    // FPS
     glEnable(GL_COLOR_LOGIC_OP);
     glLogicOp(GL_INVERT);
     glRasterPos2d(windowWidth-60, windowHeight-20);
@@ -310,6 +349,9 @@ void display() {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *i);
     }
     glDisable(GL_COLOR_LOGIC_OP);
+
+    // Restore matrices
+    glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -463,20 +505,25 @@ void doSelection(int x, int y) {
  * @param y Ordinate of the mouse pointer when the event was issued
  */
 void mouse(int button, int state, int x, int y) {
+    x = y = 0; // suppress unused warning
+    // Just capture the mouse, if still free
+    if (!mouseCaptured) {
+        if (button == GLUT_LEFT_BUTTON) {
+            glutSetCursor(GLUT_CURSOR_NONE);
+            glutWarpPointer(windowWidth/2, windowHeight/2);
+            mouseCaptured = true;
+        }
+        return;
+    }
     lastMouseButton = button;
-    if (button == GLUT_RIGHT_BUTTON) {
-        // Prepare for camera movement
-        mouseButtonPressed[2] = state == GLUT_DOWN;
-        lastMouseX = x;
-        lastMouseY = y;
-    } else if (button == GLUT_LEFT_BUTTON) {
+    if (button == GLUT_LEFT_BUTTON) {
         if (mouseButtonPressed[0] && state == GLUT_UP) {
             mouseButtonPressed[0] = false;
         } else if (!mouseButtonPressed[0] && state == GLUT_DOWN) {
             // First time event of button being pressed
             mouseButtonPressed[0] = true;
             // Launch a selection test
-            doSelection(x, y);
+            doSelection(windowWidth/2, windowHeight/2);
         }
     } else if (state == GLUT_DOWN && (button == 3 || button == 4)) {
         // Rotate inclinaison with mouse wheel
@@ -493,17 +540,19 @@ void mouse(int button, int state, int x, int y) {
  * @param y Ordinate of the mouse pointer when the event was issued
  */
 void motion(int x, int y) {
-    if (mouseButtonPressed[2]) {
-        // Rotate the camera using last recorded position
-        double angleX = (x-lastMouseX) / 300.0 / 2.0;
-        double angleY = (y-lastMouseY) / 300.0 / 2.0;
-        Matrix<float,4,4> rotX = MatrixHelper::rotation(angleX, playerInclinaison);
-        Matrix<float,4,4> rotY = MatrixHelper::rotation(angleY, playerLookAt*playerInclinaison);
-        playerLookAt = rotY * rotX * playerLookAt;
-        playerInclinaison = rotY * playerInclinaison;
-        lastMouseX = x;
-        lastMouseY = y;
-    }
+    if (!mouseCaptured)
+        return;
+    // Rotate the camera using last recorded position
+    double angleX = (windowWidth/2 -x) / 300.0 / 2.0;
+    double angleY = (windowHeight/2-y) / 300.0 / 2.0;
+    if (angleX == 0 && angleY == 0)
+        return;
+    Matrix<float,4,4> rotX = MatrixHelper::rotation(angleX, playerInclinaison);
+    Matrix<float,4,4> rotY = MatrixHelper::rotation(angleY, playerLookAt*playerInclinaison);
+    playerLookAt = rotY * rotX * playerLookAt;
+    playerInclinaison = rotY * playerInclinaison;
+    glutWarpPointer(windowWidth/2, windowHeight/2);
+    glutPostRedisplay();
 }
 /**
  * @brief Handle key press.
@@ -530,6 +579,9 @@ void keyboard(unsigned char key, int x, int y) {
         playerAdvance[2] = MIN(1, playerAdvance[2]+1);
     } else if (key == 'e') {
         playerAdvance[2] = MAX(-1, playerAdvance[2]-1);
+    } else if (key == (char)27) { // Escape
+        mouseCaptured = false;
+        glutSetCursor(GLUT_CURSOR_INHERIT);
     }
 }
 /**
@@ -608,14 +660,15 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutMouseFunc(mouse);
+    glutPassiveMotionFunc(motion);
     glutMotionFunc(motion);
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
     glutIgnoreKeyRepeat(1);
 
     // Load textures
-    GLuint texs[4];
-    glGenTextures(4, texs);
+    GLuint texs[5];
+    glGenTextures(5, texs);
     // Target
     PngImage* pi_target = new PngImage();
     pi_target->read_from_file("resources/target.png");
@@ -636,6 +689,13 @@ int main(int argc, char** argv) {
     pi_breachhidden->read_from_file("resources/breach-hidden.png");
     breachhidden_texture = texs[3];
     Texture breachHighlightTexture (breachhidden_texture, GL_RGBA8, pi_breachhidden->getWidth(), pi_breachhidden->getHeight(), GL_RGBA, pi_breachhidden->getTexels());
+    // Crosshair
+    PngImage* pi_crosshair = new PngImage();
+    pi_crosshair->read_from_file("resources/crosshair.png");
+    crosshair_texture = texs[4];
+    crosshairTexture = Texture(crosshair_texture, GL_RGBA8, pi_crosshair->getWidth(), pi_crosshair->getHeight(), GL_RGBA, pi_crosshair->getTexels());
+    crosshairWidth  = pi_crosshair->getWidth();
+    crosshairHeight = pi_crosshair->getHeight();
     // Free textures as they have been transferred to the GPU
     delete pi_target;
     pi_target = NULL;
@@ -645,6 +705,8 @@ int main(int argc, char** argv) {
     pi_breach = NULL;
     delete pi_breachhidden;
     pi_breachhidden = NULL;
+    delete pi_crosshair;
+    pi_crosshair = NULL;
 
     initTargets(targetTexture);
     initWalls(wallTexture);

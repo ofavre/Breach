@@ -38,6 +38,7 @@ using namespace std;
 #include "walls.hpp"
 #include "breaches.hpp"
 #include "selection.hpp"
+#include "crosshair.hpp"
 
 /*! \def MIN(a,b)
  * @brief A macro that returns the minimum of \a a and \a b.
@@ -67,12 +68,13 @@ GLuint breach_texture = -1;
 GLuint breachhidden_texture = -1;
 //! @brief Texture id for the crosshair
 GLuint crosshair_texture = -1;
-//! @brief Texture for the crosshair
-Texture crosshairTexture = Texture::NO_TEXTURE;
-//! @brief Width of the crosshair (its texture one)
-int crosshairWidth = -1;
-//! @brief Height of the crosshair (its texture one)
-int crosshairHeight = -1;
+//! @brief Texture id for the crosshair overlay
+GLuint crosshair_overlay_texture = -1;
+
+//! @brief The crosshair
+Crosshair crosshair;
+//! @brief The crosshair renderer, for the 2D overlay
+CrosshairRenderer* crosshairRenderer = NULL;
 
 // Windowing stuff
 //! @brief Scale used for passing to pixels to OpenGL unit
@@ -309,35 +311,7 @@ void display() {
     glDisable(GL_LIGHTING);
 
     // Crosshair
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, crosshairTexture.getName());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(1,1,1,1);
-    float x = windowWidth/2;
-    float y = windowHeight/2;
-    glBegin(GL_QUADS);
-    x -= crosshairWidth/2;
-    y -= crosshairHeight/2;
-    glTexCoord2f(0,0);
-    glVertex2f(x,y);
-    x += crosshairWidth;
-    glTexCoord2f(1,0);
-    glVertex2f(x,y);
-    y += crosshairHeight;
-    glTexCoord2f(1,1);
-    glVertex2f(x,y);
-    x -= crosshairWidth;
-    glTexCoord2f(0,1);
-    glVertex2f(x,y);
-    glEnd();
-    glDisable(GL_BLEND);
-    glBindTexture(GL_TEXTURE_2D, Texture::NO_TEXTURE.getName());
-    glDisable(GL_TEXTURE_2D);
+    crosshairRenderer->fullRender(GL_RENDER);
 
     // FPS
     glEnable(GL_COLOR_LOGIC_OP);
@@ -487,7 +461,7 @@ void doSelection(int x, int y) {
                 printf("  shotPosition = (%f, %f, %f)\n", corrected[0], corrected[1], corrected[2]);
                 printf("  shotPosition = (%f, %f) in wall coordinates\n", wallC[0], wallC[1]);
 
-                breaches[0] = Breach(true, *shotWall, wallC);
+                breaches[0] = Breach(true, *shotWall, breaches[0].getColor(), wallC);
             } else
                 printf("No wall hit\n");
         }
@@ -667,8 +641,8 @@ int main(int argc, char** argv) {
     glutIgnoreKeyRepeat(1);
 
     // Load textures
-    GLuint texs[5];
-    glGenTextures(5, texs);
+    GLuint texs[6];
+    glGenTextures(6, texs);
     // Target
     PngImage* pi_target = new PngImage();
     pi_target->read_from_file("resources/target.png");
@@ -693,9 +667,14 @@ int main(int argc, char** argv) {
     PngImage* pi_crosshair = new PngImage();
     pi_crosshair->read_from_file("resources/crosshair.png");
     crosshair_texture = texs[4];
-    crosshairTexture = Texture(crosshair_texture, GL_RGBA8, pi_crosshair->getWidth(), pi_crosshair->getHeight(), GL_RGBA, pi_crosshair->getTexels());
-    crosshairWidth  = pi_crosshair->getWidth();
-    crosshairHeight = pi_crosshair->getHeight();
+    Texture crosshairTexture = Texture(crosshair_texture, GL_RGBA8, pi_crosshair->getWidth(), pi_crosshair->getHeight(), GL_RGBA, pi_crosshair->getTexels());
+    // Crosshair breach overlay indicator
+    PngImage* pi_crosshair_overlay = new PngImage();
+    pi_crosshair_overlay->read_from_file("resources/crosshair-overlay.png");
+    crosshair_overlay_texture = texs[5];
+    Texture crosshairOverlayTexture = Texture(crosshair_overlay_texture, GL_RGBA8, pi_crosshair_overlay->getWidth(), pi_crosshair_overlay->getHeight(), GL_RGBA, pi_crosshair_overlay->getTexels());
+    // Crosshair renderer
+    crosshairRenderer = new CrosshairRenderer(crosshair, pi_crosshair_overlay->getWidth(), pi_crosshair_overlay->getHeight(), windowWidth, windowHeight, crosshairTexture, crosshairOverlayTexture);
     // Free textures as they have been transferred to the GPU
     delete pi_target;
     pi_target = NULL;
@@ -707,13 +686,20 @@ int main(int argc, char** argv) {
     pi_breachhidden = NULL;
     delete pi_crosshair;
     pi_crosshair = NULL;
+    delete pi_crosshair_overlay;
+    pi_crosshair_overlay = NULL;
 
     initTargets(targetTexture);
     initWalls(wallTexture);
     initBreaches(breachTexture, breachHighlightTexture);
+    crosshair.addBreach(breaches[0], 0);
+    crosshair.addBreach(breaches[1], 2);
 
     // Let OpenGL control the program through its main loop
     glutMainLoop();
+
+    delete crosshairRenderer;
+    crosshairRenderer = NULL;
 
     std::cout << "Bye!" << std::endl;
     return 0;

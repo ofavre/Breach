@@ -37,6 +37,8 @@ class Breach {
         bool opened;
         //! @brief The porting wall. Transformations are relative to it.
         const Wall* wall;
+        //! @brief The breach color.
+        Matrix<float,4,1> color;
         /**
         * @brief The transformation matrix to apply to translate, orient and scale the breach.
         *
@@ -50,12 +52,13 @@ class Breach {
         static Matrix<float,4,4> getTransformationFromWall(const Wall& wall, const Matrix<float,2,1> shotPoint);
 
     public:
-        Breach(bool opened, const Wall& wall, Matrix<float,2,1> shotPoint);
-        Breach(bool opened, const Wall& wall, Matrix<float,4,4> transformation);
+        Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,2,1> shotPoint);
+        Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,4,4> transformation);
         virtual ~Breach();
 
-        Matrix<float,4,4> getTransformation() const;
         bool isOpened() const;
+        Matrix<float,4,1> getColor() const;
+        Matrix<float,4,4> getTransformation() const;
 };
 
 
@@ -65,7 +68,7 @@ class Breach {
  */
 class BreachRenderer : public SelectableLeafRenderable, public MatrixTransformerRenderable {
     protected:
-        //! @brief Wall to render
+        //! @brief Breach to render
         Breach& breach;
         Texturer& texturer;
         Texturer& highlightTexturer;

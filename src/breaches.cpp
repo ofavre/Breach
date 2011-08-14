@@ -72,16 +72,18 @@ Matrix<float,4,4> Breach::getTransformationFromWall(const Wall& wall, const Matr
     return rtn;
 }
 
-Breach::Breach(bool opened, const Wall& wall, Matrix<float,2,1> shotPoint)
+Breach::Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,2,1> shotPoint)
 : opened(opened)
 , wall(&wall)
+, color(color)
 , transformation(getTransformationFromWall(wall, getAdjustedShotPoint(wall, shotPoint)))
 {
 }
 
-Breach::Breach(bool opened, const Wall& wall, Matrix<float,4,4> transformation)
+Breach::Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,4,4> transformation)
 : opened(opened)
 , wall(&wall)
+, color(color)
 , transformation(transformation)
 {
 }
@@ -90,14 +92,19 @@ Breach::~Breach()
 {
 }
 
-Matrix<float,4,4> Breach::getTransformation() const
-{
-    return transformation;
-}
-
 bool Breach::isOpened() const
 {
     return opened;
+}
+
+Matrix<float,4,1> Breach::getColor() const
+{
+    return color;
+}
+
+Matrix<float,4,4> Breach::getTransformation() const
+{
+    return transformation;
 }
 
 
@@ -163,8 +170,8 @@ void BreachRenderer::render(GLenum renderingMode)
 
 void initBreaches(Texture texture, Texture highlight)
 {
-    breaches.push_back(Breach(true, walls[0], Matrix<float,4,4>((float[]){Breach::DEFAULT_BREACH_WIDTH/2,0,0,0, 0,Breach::DEFAULT_BREACH_HEIGHT/2,0,0, 0,0,1,0, -.5,.5,-2,1})));
-    //breaches.push_back(Breach(false, Matrix<float,4,4>()));
+    breaches.push_back(Breach(false, walls[0], Matrix<float,4,1>((float[]){0,0.5,1,1}), Matrix<float,4,4>((float[]){Breach::DEFAULT_BREACH_WIDTH/2,0,0,0, 0,Breach::DEFAULT_BREACH_HEIGHT/2,0,0, 0,0,1,0, -.5,.5,-2,1})));
+    breaches.push_back(Breach(false, walls[0], Matrix<float,4,1>((float[]){1,0.5,0,1}), MatrixHelper::identity<float>()));
 
     TexturerCompositeRenderable* breachTexturer = new TexturerCompositeRenderable(texture);
     TexturerCompositeRenderable* breachHighlightTexturer = new TexturerCompositeRenderable(highlight);

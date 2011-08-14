@@ -90,8 +90,6 @@ float height;
 
 //! @brief Tracks (last) mouse buttons state
 bool mouseButtonPressed[3] = {false, false, false};
-//! @brief Last mouse button manipulated
-int lastMouseButton;
 //! @brief Is mouse captured, and should events be taken care of, or not.
 bool mouseCaptured = false;
 
@@ -128,7 +126,7 @@ int playerAdvance[3] = {0, 0, 0};
 void draw_scene(bool forSelection = false) {
     if (!forSelection) {
 
-        if (breaches[0].isOpened()) {
+        if (breaches[0].isOpened() || breaches[1].isOpened()) {
 
             // Test fake far scene (simply draw a target behind the wall)
             GLfloat mat_ambiant[] = { 1, 1, 1, 1 };
@@ -167,32 +165,34 @@ void draw_scene(bool forSelection = false) {
     glClear(GL_COLOR_BUFFER_BIT);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     if (!forSelection) {
-        if (breaches[0].isOpened()) {
-            // Draw breach in alpha only
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, breach_texture);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glMultMatrixf(breaches[0].getTransformation().values);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0,0);
-            glVertex3f(-1, -1, 0);
-            glTexCoord2f(1,0);
-            glVertex3f( 1, -1, 0);
-            glTexCoord2f(1,1);
-            glVertex3f( 1,  1, 0);
-            glTexCoord2f(0,1);
-            glVertex3f(-1,  1, 0);
-            glEnd();
-            glPopMatrix();
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            glEnable(GL_LIGHTING);
-            // Draw wall, blending according to previous (destination) alpha
-            glClear(GL_DEPTH_BUFFER_BIT);
+        for (std::vector<Breach>::iterator it = breaches.begin() ; it < breaches.end() ; it++) {
+            if (it->isOpened()) {
+                // Draw breach in alpha only
+                glClear(GL_DEPTH_BUFFER_BIT);
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, breach_texture);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glMultMatrixf(it->getTransformation().values);
+                glBegin(GL_QUADS);
+                glTexCoord2f(0,0);
+                glVertex3f(-1, -1, 0);
+                glTexCoord2f(1,0);
+                glVertex3f( 1, -1, 0);
+                glTexCoord2f(1,1);
+                glVertex3f( 1,  1, 0);
+                glTexCoord2f(0,1);
+                glVertex3f(-1,  1, 0);
+                glEnd();
+                glPopMatrix();
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                glEnable(GL_LIGHTING);
+                // Draw wall, blending according to previous (destination) alpha
+                glClear(GL_DEPTH_BUFFER_BIT);
+            }
         }
     }
     // (Draw the wall even if there is no breach on it, or if we are in selection mode)
@@ -358,10 +358,11 @@ void display() {
  * Called upon a mouse click at a specified position.
  * Currently only affects targets.
  *
+ * @param button Mouse button pressed
  * @param x Absciss of the clicked pixel
  * @param y Ordinate of the clicked pixel
  */
-void doSelection(int x, int y) {
+void doSelection(int button, int x, int y) {
 #define SELECTION_BUFFER_SIZE 512
     GLuint buffer[SELECTION_BUFFER_SIZE];
     GLint viewport[4];
@@ -444,7 +445,8 @@ void doSelection(int x, int y) {
         if (targetSelectionResolver.isSelectedObjectFound()) {
             Target* shotTarget = targetSelectionResolver.getSelectedObject();
             printf("Found : %p at (%f, %f, %f)\n", shotTarget, shotTarget->getX(), shotTarget->getY(), shotTarget->getZ());
-            shotTarget->setHit();
+            if (button == 1)
+                shotTarget->setHit();
         } else {
             printf("No target hit\n");
 
@@ -461,7 +463,11 @@ void doSelection(int x, int y) {
                 printf("  shotPosition = (%f, %f, %f)\n", corrected[0], corrected[1], corrected[2]);
                 printf("  shotPosition = (%f, %f) in wall coordinates\n", wallC[0], wallC[1]);
 
-                breaches[0] = Breach(true, *shotWall, breaches[0].getColor(), wallC);
+                if (button == 0) {
+                    breaches[0] = Breach(true, *shotWall, breaches[0].getColor(), wallC);
+                } else if (button == 2) {
+                    breaches[1] = Breach(true, *shotWall, breaches[1].getColor(), wallC);
+                }
             } else
                 printf("No wall hit\n");
         }
@@ -489,20 +495,43 @@ void mouse(int button, int state, int x, int y) {
         }
         return;
     }
-    lastMouseButton = button;
-    if (button == GLUT_LEFT_BUTTON) {
-        if (mouseButtonPressed[0] && state == GLUT_UP) {
-            mouseButtonPressed[0] = false;
-        } else if (!mouseButtonPressed[0] && state == GLUT_DOWN) {
-            // First time event of button being pressed
-            mouseButtonPressed[0] = true;
-            // Launch a selection test
-            doSelection(windowWidth/2, windowHeight/2);
-        }
-    } else if (state == GLUT_DOWN && (button == 3 || button == 4)) {
+    if (state == GLUT_DOWN && (button == 3 || button == 4)) {
         // Rotate inclinaison with mouse wheel
         Matrix<float,4,4> rot = MatrixHelper::rotation(playerInclinaisonSpeed*(button == 4 ? 1 : -1), playerLookAt);
         playerInclinaison = rot * playerInclinaison;
+    } else {
+        if (button == GLUT_LEFT_BUTTON) {
+            if (mouseButtonPressed[0] && state == GLUT_UP) {
+                mouseButtonPressed[0] = false;
+            } else if (!mouseButtonPressed[0] && state == GLUT_DOWN) {
+                // First time event of button being pressed
+                mouseButtonPressed[0] = true;
+            }
+        } else if (button == GLUT_MIDDLE_BUTTON) {
+            if (mouseButtonPressed[1] && state == GLUT_UP) {
+                mouseButtonPressed[1] = false;
+            } else if (!mouseButtonPressed[1] && state == GLUT_DOWN) {
+                // First time event of button being pressed
+                mouseButtonPressed[1] = true;
+            }
+        } else if (button == GLUT_RIGHT_BUTTON) {
+            if (mouseButtonPressed[2] && state == GLUT_UP) {
+                mouseButtonPressed[2] = false;
+            } else if (!mouseButtonPressed[2] && state == GLUT_DOWN) {
+                // First time event of button being pressed
+                mouseButtonPressed[2] = true;
+            }
+        }
+        if (mouseButtonPressed[0] && !mouseButtonPressed[1] && !mouseButtonPressed[2]) {
+            // Launch a selection test
+            doSelection(0, windowWidth/2, windowHeight/2);
+        } else if (!mouseButtonPressed[0] && mouseButtonPressed[1] && !mouseButtonPressed[2]) {
+            // Launch a selection test
+            doSelection(1, windowWidth/2, windowHeight/2);
+        } else if (!mouseButtonPressed[0] && !mouseButtonPressed[1] && mouseButtonPressed[2]) {
+            // Launch a selection test
+            doSelection(2, windowWidth/2, windowHeight/2);
+        }
     }
 }
 /**

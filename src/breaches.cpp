@@ -170,7 +170,7 @@ void BreachRenderer::render(GLenum renderingMode)
 
 void initBreaches(Texture texture, Texture highlight)
 {
-    breaches.push_back(Breach(false, walls[0], Matrix<float,4,1>((float[]){0,0.5,1,1}), Matrix<float,4,4>((float[]){Breach::DEFAULT_BREACH_WIDTH/2,0,0,0, 0,Breach::DEFAULT_BREACH_HEIGHT/2,0,0, 0,0,1,0, -.5,.5,-2,1})));
+    breaches.push_back(Breach(false, walls[0], Matrix<float,4,1>((float[]){0,0.5,1,1}), MatrixHelper::identity<float>()));
     breaches.push_back(Breach(false, walls[0], Matrix<float,4,1>((float[]){1,0.5,0,1}), MatrixHelper::identity<float>()));
 
     TexturerCompositeRenderable* breachTexturer = new TexturerCompositeRenderable(texture);

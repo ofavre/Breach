@@ -72,19 +72,41 @@ Matrix<float,4,4> Breach::getTransformationFromWall(const Wall& wall, const Matr
     return rtn;
 }
 
-Breach::Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,2,1> shotPoint)
-: opened(opened)
-, wall(&wall)
+bool Breach::shootBreach(unsigned int index, const Wall& wall, Matrix<float,2,1> shotPoint)
+{
+    if (index >= breaches.size())
+        return false;
+    Matrix<float,2,1> adjustedShotPoint = getAdjustedShotPoint(wall, shotPoint);
+    // Check for overlapping
+    float aNorm = wall.getAxisA().norm();
+    float bNorm = wall.getAxisB().norm();
+    float minDist = (DEFAULT_BREACH_WIDTH*DEFAULT_BREACH_WIDTH + DEFAULT_BREACH_HEIGHT*DEFAULT_BREACH_HEIGHT) / 2 * 0.9;
+    for (unsigned int i = 0 ; i < breaches.size() ; i++) {
+        if (i == index) continue; // ignore current reshot breach
+        if (&wall != breaches[i].getWall()) continue; // ignore other walls
+        float dist = 0;
+        dist += pow(aNorm*(adjustedShotPoint[0] - breaches[i].getShotPoint()[0]), 2);
+        dist += pow(bNorm*(adjustedShotPoint[1] - breaches[i].getShotPoint()[1]), 2);
+        if (dist < minDist)
+            return false;
+    }
+    breaches[index] = Breach(true, wall, breaches[index].getColor(), adjustedShotPoint);
+    return true;
+}
+
+Breach::Breach(Matrix<float,4,1> color)
+: opened(false)
+, wall(NULL)
 , color(color)
-, transformation(getTransformationFromWall(wall, getAdjustedShotPoint(wall, shotPoint)))
 {
 }
 
-Breach::Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,4,4> transformation)
+Breach::Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,2,1> shotPoint) //Matrix<float,4,4> transformation)
 : opened(opened)
 , wall(&wall)
 , color(color)
-, transformation(transformation)
+, shotPoint(shotPoint)
+, transformation(getTransformationFromWall(wall, shotPoint)) //transformation)
 {
 }
 
@@ -97,9 +119,19 @@ bool Breach::isOpened() const
     return opened;
 }
 
+const Wall* Breach::getWall() const
+{
+    return wall;
+}
+
 Matrix<float,4,1> Breach::getColor() const
 {
     return color;
+}
+
+Matrix<float,2,1> Breach::getShotPoint() const
+{
+    return shotPoint;
 }
 
 Matrix<float,4,4> Breach::getTransformation() const
@@ -170,8 +202,8 @@ void BreachRenderer::render(GLenum renderingMode)
 
 void initBreaches(Texture texture, Texture highlight)
 {
-    breaches.push_back(Breach(false, walls[0], Matrix<float,4,1>((float[]){0,0.5,1,1}), MatrixHelper::identity<float>()));
-    breaches.push_back(Breach(false, walls[0], Matrix<float,4,1>((float[]){1,0.5,0,1}), MatrixHelper::identity<float>()));
+    breaches.push_back(Breach(Matrix<float,4,1>((float[]){0,0.5,1,1})));
+    breaches.push_back(Breach(Matrix<float,4,1>((float[]){1,0.5,0,1})));
 
     TexturerCompositeRenderable* breachTexturer = new TexturerCompositeRenderable(texture);
     TexturerCompositeRenderable* breachHighlightTexturer = new TexturerCompositeRenderable(highlight);

@@ -39,6 +39,8 @@ class Breach {
         const Wall* wall;
         //! @brief The breach color.
         Matrix<float,4,1> color;
+        //! @brief Original shot point.
+        Matrix<float,2,1> shotPoint;
         /**
         * @brief The transformation matrix to apply to translate, orient and scale the breach.
         *
@@ -52,12 +54,16 @@ class Breach {
         static Matrix<float,4,4> getTransformationFromWall(const Wall& wall, const Matrix<float,2,1> shotPoint);
 
     public:
-        Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,2,1> shotPoint);
-        Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,4,4> transformation);
+        static bool shootBreach(unsigned int index, const Wall& wall, Matrix<float,2,1> shotPoint);
+
+        Breach(Matrix<float,4,1> color);
+        Breach(bool opened, const Wall& wall, Matrix<float,4,1> color, Matrix<float,2,1> shotPoint); //Matrix<float,4,4> transformation);
         virtual ~Breach();
 
         bool isOpened() const;
+        const Wall* getWall() const;
         Matrix<float,4,1> getColor() const;
+        Matrix<float,2,1> getShotPoint() const;
         Matrix<float,4,4> getTransformation() const;
 };
 

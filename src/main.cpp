@@ -167,13 +167,16 @@ void draw_scene(bool forSelection = false) {
     if (!forSelection) {
         for (std::vector<Breach>::iterator it = breaches.begin() ; it < breaches.end() ; it++) {
             if (it->isOpened()) {
-                // Draw breach in alpha only
+                // Draw breach in alpha only, minimizing opacity for better superposition
                 glClear(GL_DEPTH_BUFFER_BIT);
                 glEnable(GL_TEXTURE_2D);
                 glBindTexture(GL_TEXTURE_2D, breach_texture);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_ZERO, GL_ONE);
+                glBlendEquation(GL_MIN);
                 glMatrixMode(GL_MODELVIEW);
                 glPushMatrix();
                 glMultMatrixf(it->getTransformation().values);
@@ -192,6 +195,9 @@ void draw_scene(bool forSelection = false) {
                 glEnable(GL_LIGHTING);
                 // Draw wall, blending according to previous (destination) alpha
                 glClear(GL_DEPTH_BUFFER_BIT);
+                glBlendEquation(GL_FUNC_ADD);
+                glDisable(GL_TEXTURE_2D);
+                glDisable(GL_BLEND);
             }
         }
     }
@@ -463,10 +469,16 @@ void doSelection(int button, int x, int y) {
                 printf("  shotPosition = (%f, %f, %f)\n", corrected[0], corrected[1], corrected[2]);
                 printf("  shotPosition = (%f, %f) in wall coordinates\n", wallC[0], wallC[1]);
 
+                unsigned int index = -1;
                 if (button == 0) {
-                    breaches[0] = Breach(true, *shotWall, breaches[0].getColor(), wallC);
+                    index = 0;
                 } else if (button == 2) {
-                    breaches[1] = Breach(true, *shotWall, breaches[1].getColor(), wallC);
+                    index = 1;
+                }
+                if (index != -1) {
+                    if (!Breach::shootBreach(index, *shotWall, wallC)) {
+                        printf("  Could not shoot the breach!\n");
+                    }
                 }
             } else
                 printf("No wall hit\n");
